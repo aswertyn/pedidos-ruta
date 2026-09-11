@@ -2,16 +2,20 @@ import { useState } from 'react'
 
 import AgentSelector from './components/AgentSelector'
 import CustomerSelector from './components/CustomerSelector'
+import ConsigneeSelector from './components/ConsigneeSelector'
 
 import { agents } from './data/agents'
 import { customers } from './data/customers'
+import { consignees } from './data/consignees'
 
 import type { Agent } from './types/agent'
 import type { Customer } from './types/customer'
+import type { Consignee } from './types/consignee'
 
 function App() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [selectedConsignee, setSelectedConsignee] = useState<Consignee | null>(null)
 
   const handleAgentChange = (agentNumber: string) => {
     const agent = agents.find(
@@ -20,6 +24,7 @@ function App() {
 
     setSelectedAgent(agent ?? null)
     setSelectedCustomer(null)
+    setSelectedConsignee(null)
   }
 
   const handleCustomerChange = (customerNumber: string) => {
@@ -28,13 +33,31 @@ function App() {
     )
 
     setSelectedCustomer(customer ?? null)
+    setSelectedConsignee(null)
+  }
+
+  const handleConsigneeChange = (consigneeNumber: string) => {
+    const consignee = consignees.find(
+      (consignee) =>
+        consignee.consigneeNumber === consigneeNumber &&
+        consignee.customerNumber === selectedCustomer?.customerNumber,
+    )
+
+    setSelectedConsignee(consignee ?? null)
   }
 
   const agentCustomers = selectedAgent
     ? customers.filter(
-        (customer) =>
-          customer.agentNumber === selectedAgent.agentNumber,
-      )
+      (customer) =>
+        customer.agentNumber === selectedAgent.agentNumber,
+    )
+    : []
+
+  const customerConsignees = selectedCustomer
+    ? consignees.filter(
+      (consignee) =>
+        consignee.customerNumber === selectedCustomer.customerNumber,
+    )
     : []
 
   return (
@@ -53,6 +76,13 @@ function App() {
           customers={agentCustomers}
           selectedCustomer={selectedCustomer}
           onCustomerChange={handleCustomerChange}
+        />
+      )}
+      {selectedCustomer && (
+        <ConsigneeSelector
+          consignees={customerConsignees}
+          selectedConsignee={selectedConsignee}
+          onConsigneeChange={handleConsigneeChange}
         />
       )}
     </main>

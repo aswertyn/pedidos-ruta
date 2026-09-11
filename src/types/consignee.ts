@@ -1,6 +1,6 @@
 export interface Consignee {
-  id: string
-  customerId: string
+  consigneeNumber: string
+  customerNumber: string
   address: string
   city: string
   receivingHours: string
