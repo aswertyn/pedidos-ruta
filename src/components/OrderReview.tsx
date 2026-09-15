@@ -60,7 +60,8 @@ function OrderReview({
           </p>
           <p>
             <strong>Horario:</strong>{' '}
-            {order.manualConsignee.receivingHours}
+            {order.manualConsignee.receivingStartTime} -{''}
+            {order.manualConsignee.receivingEndTime}
           </p>
         </>
       ) : (

@@ -31,6 +31,7 @@ function App() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [currentStep, setCurrentStep] = useState<OrderStep>('agent')
   const [orderDate, setOrderDate] = useState('')
+  // Declaración pendiente: Estado "programado" como predeterminado actualmente*
   const [deliveryPriority, setDeliveryPriority] = useState<DeliveryPriority>('scheduled')
   const [purchaseOrder, setPurchaseOrder] = useState('')
   const [observations, setObservations] = useState('')
@@ -44,6 +45,14 @@ function App() {
       ...currentItems,
       item,
     ])
+  }
+
+  const handleRemoveItem = (indexToRemove: number) => {
+    setOrderItems((currentItems) =>
+      currentItems.filter(
+        (_, index) => index !== indexToRemove,
+      ),
+    )
   }
 
   const handleAgentChange = (agentNumber: string) => {
@@ -97,7 +106,10 @@ function App() {
     manualConsignee !== null &&
     manualConsignee.address.trim() !== '' &&
     manualConsignee.city.trim() !== '' &&
-    manualConsignee.receivingHours.trim() !== ''
+    manualConsignee.receivingStartTime.trim() !== '' &&
+    manualConsignee?.receivingEndTime.trim() !== '' &&
+    manualConsignee?.receivingEndTime >
+    manualConsignee.receivingStartTime
 
   const hasDeliveryDestination =
     selectedConsignee !== null || hasValidManualConsignee
@@ -199,21 +211,25 @@ function App() {
             onManualConsigneeChange={setManualConsignee}
           />
 
-          <button
-            type="button"
-            onClick={() => goToStep('customer')}
-          >
-            Volver
-          </button>
-
-          {hasDeliveryDestination && (
+          <div className="step-acions">
             <button
+              className="secondary-button"
               type="button"
-              onClick={() => goToStep('products')}
+              onClick={() => goToStep('customer')}
             >
-              Continuar
+              Volver
             </button>
-          )}
+
+            {hasDeliveryDestination && (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => goToStep('products')}
+              >
+                Continuar
+              </button>
+            )}
+          </div>
         </section>
       )}
 
@@ -224,42 +240,115 @@ function App() {
           <OrderItemForm onAddItem={handleAddItem} />
 
           {orderItems.length > 0 && (
-            <div>
-              <h2>Productos agregados</h2>
+            <section className="order-items-summary">
+              <div className="summary-header">
+                <h2>Productos agregados</h2>
 
-              {orderItems.map((item, index) => (
-                <div key={`${item.productNumber}-${index}`}>
-                  <p>
-                    <strong>Modelo:</strong> {item.model}
-                  </p>
+                <span className="item-count">
+                  {orderItems.length}
+                </span>
+              </div>
 
-                  <p>
-                    <strong>Tamaño:</strong> {item.bedSize}
-                  </p>
+              <div className="order-items-list">
+                {orderItems.map((item, index) => (
+                  <article
+                    className="order-item-card"
+                    key={`${item.productNumber}-${index}`}
+                  >
+                    <div className="order-item-header">
+                      <div>
+                        <span className="order-item-number">
+                          {item.productNumber}
+                        </span>
 
-                  <p>
-                    <strong>Cantidad:</strong> {item.quantity}
-                  </p>
-                </div>
-              ))}
-            </div>
+                        <h3>{item.model}</h3>
+
+                        <p>
+                          {item.productType === 'mattress'
+                            ? 'Colchón'
+                            : item.productType === 'box'
+                              ? 'Box'
+                              : 'Tarima'}
+                          {' · '}
+                          {item.bedSize === 'ind'
+                            ? 'Individual'
+                            : item.bedSize === 'mat'
+                              ? 'Matrimonial'
+                              : item.bedSize === 'Q.S.'
+                                ? 'Queen Size'
+                                : 'King Size'}
+                        </p>
+                      </div>
+
+                      <button
+                        className="remove-item-button"
+                        type="button"
+                        onClick={() => handleRemoveItem(index)}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+
+                    <div className="order-item-values">
+                      <div>
+                        <span>Cantidad</span>
+                        <strong>{item.quantity}</strong>
+                      </div>
+
+                      <div>
+                        <span>Precio</span>
+                        <strong>
+                          ${item.price.toFixed(2)}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Subtotal</span>
+                        <strong>
+                          ${(item.quantity * item.price).toFixed(2)}
+                        </strong>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="order-total">
+                <span>Total del pedido</span>
+
+                <strong>
+                  $
+                  {orderItems
+                    .reduce(
+                      (total, item) =>
+                        total + item.quantity * item.price,
+                      0,
+                    )
+                    .toFixed(2)}
+                </strong>
+              </div>
+            </section>
           )}
 
-          <button
-            type="button"
-            onClick={() => goToStep('delivery')}
-          >
-            Volver
-          </button>
-
-          {orderItems.length > 0 && (
+          <div className="step-actions">
             <button
+              className="secondary-button"
               type="button"
-              onClick={() => goToStep('details')}
+              onClick={() => goToStep('delivery')}
             >
-              Continuar
+              Volver
             </button>
-          )}
+
+            {orderItems.length > 0 && (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => goToStep('details')}
+              >
+                Continuar
+              </button>
+            )}
+          </div>
         </section>
       )}
 
@@ -276,21 +365,25 @@ function App() {
             onObservationsChange={setObservations}
           />
 
-          <button
-            type="button"
-            onClick={() => goToStep('products')}
-          >
-            Volver
-          </button>
-
-          {orderDate && (
+          <div className="step-actions">
             <button
+              className="secondary-button"
               type="button"
-              onClick={() => goToStep('review')}
+              onClick={() => goToStep('products')}
             >
-              Revisar pedido
+              Volver
             </button>
-          )}
+
+            {orderDate && (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => goToStep('review')}
+              >
+                Revisar pedido
+              </button>
+            )}
+          </div>
         </section>
       )}
 

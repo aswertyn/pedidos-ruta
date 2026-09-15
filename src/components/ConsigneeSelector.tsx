@@ -22,59 +22,125 @@ function ConsigneeSelector({
     consignees.length === 0,
   )
 
+  const handleConsigneeSelection = (consigneeNumber: string) => {
+    setUseManualAddress(false)
+    onConsigneeChange(consigneeNumber)
+  }
+
+  const handleManualSelection = () => {
+    setUseManualAddress(true)
+    onConsigneeChange('')
+  }
+
   return (
-    <section>
-      <h2>Consignación</h2>
+    <section className="consignee-selector">
+      <h2>Lugar de entrega</h2>
+
+      <p className="selector-help">
+        Selecciona dónde se entregará el pedido.
+      </p>
 
       {consignees.length > 0 && (
-        <>
-          <select
-            value={selectedConsignee?.consigneeNumber ?? ''}
-            onChange={(event) => {
-              setUseManualAddress(false)
-              onConsigneeChange(event.target.value)
-            }}
-          >
-            <option value="">Seleccione una consignación</option>
+        <div className="consignee-list">
+          {consignees.map((consignee) => {
+            const isSelected =
+              !useManualAddress &&
+              selectedConsignee?.consigneeNumber ===
+              consignee.consigneeNumber
 
-            {consignees.map((consignee) => (
-              <option
+            return (
+              <button
                 key={consignee.consigneeNumber}
-                value={consignee.consigneeNumber}
+                type="button"
+                className={`consignee-card ${isSelected ? 'selected' : ''
+                  }`}
+                onClick={() =>
+                  handleConsigneeSelection(
+                    consignee.consigneeNumber,
+                  )
+                }
               >
-                {consignee.consigneeNumber} - {consignee.city}
-              </option>
-            ))}
-          </select>
+                <span className="consignee-information">
+                  <span className="consignee-number">
+                    Consignación {consignee.consigneeNumber}
+                  </span>
+
+                  <span className="consignee-address">
+                    {consignee.address}
+                  </span>
+
+                  <span className="consignee-city">
+                    {consignee.city}
+                  </span>
+
+                  <span className="consignee-hours">
+                    Horario: {consignee.receivingHours}
+                  </span>
+                </span>
+
+                {isSelected && (
+                  <span className="selection-check">
+                    ✓
+                  </span>
+                )}
+              </button>
+            )
+          })}
 
           <button
             type="button"
-            onClick={() => setUseManualAddress(true)}
+            className={`manual-address-card ${useManualAddress ? 'selected' : ''
+              }`}
+            onClick={handleManualSelection}
           >
-            Capturar otra dirección
+            <span className="manual-address-symbol">+</span>
+
+            <span className="consignee-information">
+              <span className="consignee-number">
+                Otra dirección
+              </span>
+
+              <span className="consignee-city">
+                Capturar lugar de entrega manualmente
+              </span>
+            </span>
+
+            {useManualAddress && (
+              <span className="selection-check">
+                ✓
+              </span>
+            )}
           </button>
-        </>
+        </div>
       )}
 
       {consignees.length === 0 && (
-        <p>Este cliente no tiene consignaciones registradas.</p>
+        <div className="consignee-notice">
+          <strong>Sin consignaciones registradas</strong>
+          <span>
+            Captura el lugar de entrega manualmente.
+          </span>
+        </div>
       )}
 
       {useManualAddress && (
-        <div>
-          <h3>Dirección de entrega manual</h3>
+        <div className="manual-address-form">
+          <h3>Dirección de entrega</h3>
 
           <label>
             Dirección
             <input
               type="text"
+              placeholder="Ingresa la dirección"
               value={manualConsignee?.address ?? ''}
               onChange={(event) =>
                 onManualConsigneeChange({
                   address: event.target.value,
                   city: manualConsignee?.city ?? '',
-                  receivingHours:
-                    manualConsignee?.receivingHours ?? '',
+                  receivingStartTime:
+                    manualConsignee?.receivingStartTime ?? '',
+                  receivingEndTime:
+                    manualConsignee?.receivingEndTime ?? '',
                 })
               }
             />
@@ -84,56 +150,56 @@ function ConsigneeSelector({
             Población
             <input
               type="text"
+              placeholder="Ingresa la población"
               value={manualConsignee?.city ?? ''}
               onChange={(event) =>
                 onManualConsigneeChange({
                   address: manualConsignee?.address ?? '',
                   city: event.target.value,
-                  receivingHours:
-                    manualConsignee?.receivingHours ?? '',
+                  receivingStartTime:
+                    manualConsignee?.receivingStartTime ?? '',
+                  receivingEndTime:
+                    manualConsignee?.receivingEndTime ?? '',
                 })
               }
             />
           </label>
 
-          <label>
-            Horario de recepción
-            <input
-              type="text"
-              value={manualConsignee?.receivingHours ?? ''}
-              onChange={(event) =>
-                onManualConsigneeChange({
-                  address: manualConsignee?.address ?? '',
-                  city: manualConsignee?.city ?? '',
-                  receivingHours: event.target.value,
-                })
-              }
-            />
-          </label>
-        </div>
-      )}
+          <div className="time-range">
+            <label>
+              Desde
+              <input
+                type="time"
+                value={manualConsignee?.receivingStartTime ?? ''}
+                onChange={(event) =>
+                  onManualConsigneeChange({
+                    address: manualConsignee?.address ?? '',
+                    city: manualConsignee?.city ?? '',
+                    receivingStartTime: event.target.value,
+                    receivingEndTime:
+                      manualConsignee?.receivingEndTime ?? '',
+                  })
+                }
+              />
+            </label>
 
-      {selectedConsignee && !useManualAddress && (
-        <div>
-          <h3>Datos de consignación</h3>
-
-          <p>
-            <strong>Número:</strong>{' '}
-            {selectedConsignee.consigneeNumber}
-          </p>
-
-          <p>
-            <strong>Dirección:</strong> {selectedConsignee.address}
-          </p>
-
-          <p>
-            <strong>Población:</strong> {selectedConsignee.city}
-          </p>
-
-          <p>
-            <strong>Horario de recepción:</strong>{' '}
-            {selectedConsignee.receivingHours}
-          </p>
+            <label>
+              Hasta
+              <input
+                type="time"
+                value={manualConsignee?.receivingEndTime ?? ''}
+                onChange={(event) =>
+                  onManualConsigneeChange({
+                    address: manualConsignee?.address ?? '',
+                    city: manualConsignee?.city ?? '',
+                    receivingStartTime:
+                      manualConsignee?.receivingStartTime ?? '',
+                    receivingEndTime: event.target.value,
+                  })
+                }
+              />
+            </label>
+          </div>
         </div>
       )}
     </section>

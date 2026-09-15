@@ -1,5 +1,6 @@
 export interface ManualConsignee {
   address: string
   city: string
-  receivingHours: string
+  receivingStartTime: string
+  receivingEndTime: string
 }

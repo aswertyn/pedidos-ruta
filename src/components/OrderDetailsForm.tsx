@@ -23,70 +23,94 @@ function OrderDetailsForm({
   onObservationsChange,
 }: OrderDetailsFormProps) {
   return (
-    <section>
+    <section className="order-details-form">
       <h2>Datos finales del pedido</h2>
 
-      <label>
+      <p className="selector-help">
+        Completa la información para finalizar el pedido.
+      </p>
+
+      <label className="form-label">
         Fecha del pedido
+
         <input
+          className="form-control"
           type="date"
           value={orderDate}
-          onChange={(event) => onOrderDateChange(event.target.value)}
+          onChange={(event) =>
+            onOrderDateChange(event.target.value)
+          }
         />
       </label>
 
-      <fieldset>
-        <legend>Tipo de entrega</legend>
+      <div className="delivery-priority">
+        <span className="option-title">
+          Tipo de entrega
+        </span>
 
-        <label>
-          <input
-            type="radio"
-            name="deliveryPriority"
-            value="urgent"
-            checked={deliveryPriority === 'urgent'}
-            onChange={() => onDeliveryPriorityChange('urgent')}
-          />
-          Urgente
-        </label>
+        <div className="priority-buttons">
+          <button
+            type="button"
+            className={`option-button ${deliveryPriority === 'urgent' ? 'selected' : ''
+              }`}
+            onClick={() =>
+              onDeliveryPriorityChange('urgent')
+            }
+          >
+            Urgente
+          </button>
 
-        <label>
-          <input
-            type="radio"
-            name="deliveryPriority"
-            value="immediate"
-            checked={deliveryPriority === 'immediate'}
-            onChange={() => onDeliveryPriorityChange('immediate')}
-          />
-          Inmediato
-        </label>
+          <button
+            type="button"
+            className={`option-button ${deliveryPriority === 'immediate'
+                ? 'selected'
+                : ''
+              }`}
+            onClick={() =>
+              onDeliveryPriorityChange('immediate')
+            }
+          >
+            Inmediato
+          </button>
 
-        <label>
-          <input
-            type="radio"
-            name="deliveryPriority"
-            value="scheduled"
-            checked={deliveryPriority === 'scheduled'}
-            onChange={() => onDeliveryPriorityChange('scheduled')}
-          />
-          Programado
-        </label>
-      </fieldset>
+          <button
+            type="button"
+            className={`option-button ${deliveryPriority === 'scheduled'
+                ? 'selected'
+                : ''
+              }`}
+            onClick={() =>
+              onDeliveryPriorityChange('scheduled')
+            }
+          >
+            Programado
+          </button>
+        </div>
+      </div>
 
-      <label>
+      <label className="form-label">
         Orden de compra
+
         <input
+          className="form-control"
           type="text"
           value={purchaseOrder}
-          onChange={(event) => onPurchaseOrderChange(event.target.value)}
+          onChange={(event) =>
+            onPurchaseOrderChange(event.target.value)
+          }
           placeholder="Opcional"
         />
       </label>
 
-      <label>
+      <label className="form-label">
         Observaciones
+
         <textarea
+          className="form-textarea"
           value={observations}
-          onChange={(event) => onObservationsChange(event.target.value)}
+          onChange={(event) =>
+            onObservationsChange(event.target.value)
+          }
           placeholder="Comentarios adicionales del pedido"
           rows={4}
         />
