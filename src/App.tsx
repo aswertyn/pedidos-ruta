@@ -124,8 +124,8 @@ function App() {
       : null
 
   return (
-    <main>
-      <header>
+    <main className="app-container">
+      <header className="app-header">
         <h1>Levantamiento de pedidos</h1>
         <p>Aplicación para captura de pedidos en ruta.</p>
       </header>
@@ -144,6 +144,7 @@ function App() {
 
           {selectedAgent && (
             <button
+              className="primary-button"
               type="button"
               onClick={() => goToStep('customer')}
             >
@@ -163,21 +164,25 @@ function App() {
             onCustomerChange={handleCustomerChange}
           />
 
-          <button
-            type="button"
-            onClick={() => goToStep('agent')}
-          >
-            Volver
-          </button>
-
-          {selectedCustomer && (
+          <div className="step-actions">
             <button
+              className="secondary-button"
               type="button"
-              onClick={() => goToStep('delivery')}
+              onClick={() => goToStep('agent')}
             >
-              Continuar
+              Volver
             </button>
-          )}
+
+            {selectedCustomer && (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={() => goToStep('delivery')}
+              >
+                Continuar
+              </button>
+            )}
+          </div>
         </section>
       )}
 
@@ -288,7 +293,7 @@ function App() {
           )}
         </section>
       )}
-      
+
       {currentStep === 'review' &&
         order &&
         selectedAgent &&

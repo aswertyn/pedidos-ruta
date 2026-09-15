@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import type { Customer } from '../types/customer'
 
 interface CustomerSelectorProps {
@@ -11,44 +13,79 @@ function CustomerSelector({
   selectedCustomer,
   onCustomerChange,
 }: CustomerSelectorProps) {
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredCustomers = customers.filter((customer) => {
+    const search = searchTerm.toLowerCase().trim()
+
+    return (
+      customer.customerNumber.toLowerCase().includes(search) ||
+      customer.name.toLowerCase().includes(search)
+    )
+  })
+
   return (
-    <section>
+    <section className="customer-selector">
       <h2>Seleccionar cliente</h2>
 
-      <select
-        value={selectedCustomer?.customerNumber ?? ''}
-        onChange={(event) => onCustomerChange(event.target.value)}
-      >
-        <option value="">Seleccione un cliente</option>
+      <p className="selector-help">
+        Busca por número o nombre del cliente.
+      </p>
 
-        {customers.map((customer) => (
-          <option key={customer.customerNumber} value={customer.customerNumber}>
-            {customer.customerNumber} - {customer.name}
-          </option>
-        ))}
-      </select>
+      <input
+        className="customer-search"
+        type="search"
+        placeholder="Número o nombre del cliente"
+        value={searchTerm}
+        onChange={(event) => setSearchTerm(event.target.value)}
+      />
 
-      {selectedCustomer && (
-        <div>
-          <h3>Datos del cliente</h3>
+      <div className="customer-list">
+        {filteredCustomers.map((customer) => {
+          const isSelected =
+            selectedCustomer?.customerNumber ===
+            customer.customerNumber
 
-          <p>
-            <strong>Número de cliente:</strong> {selectedCustomer.customerNumber}
+          return (
+            <button
+              key={customer.customerNumber}
+              type="button"
+              className={`customer-card ${
+                isSelected ? 'selected' : ''
+              }`}
+              onClick={() =>
+                onCustomerChange(customer.customerNumber)
+              }
+            >
+              <span className="customer-information">
+                <span className="customer-number">
+                  {customer.customerNumber}
+                </span>
+
+                <span className="customer-name">
+                  {customer.name}
+                </span>
+
+                <span className="customer-city">
+                  {customer.city}
+                </span>
+              </span>
+
+              {isSelected && (
+                <span className="selection-check">
+                  ✓
+                </span>
+              )}
+            </button>
+          )
+        })}
+
+        {filteredCustomers.length === 0 && (
+          <p className="empty-message">
+            No se encontraron clientes.
           </p>
-
-          <p>
-            <strong>Nombre:</strong> {selectedCustomer.name}
-          </p>
-
-          <p>
-            <strong>Dirección:</strong> {selectedCustomer.address}
-          </p>
-
-          <p>
-            <strong>Población:</strong> {selectedCustomer.city}
-          </p>
-        </div>
-      )}
+        )}
+      </div>
     </section>
   )
 }

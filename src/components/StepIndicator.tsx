@@ -13,19 +13,37 @@ const steps: OrderStep[] = [
   'review',
 ]
 
+const stepNames: Record<OrderStep, string> = {
+  agent: 'Agente',
+  customer: 'Cliente',
+  delivery: 'Entrega',
+  products: 'Productos',
+  details: 'Datos finales',
+  review: 'Revisión',
+}
+
 function StepIndicator({ currentStep }: StepIndicatorProps) {
   const currentStepNumber = steps.indexOf(currentStep) + 1
+  const progress = (currentStepNumber / steps.length) * 100
 
   return (
-    <div>
-      <p>
-        Paso {currentStepNumber} de {steps.length}
-      </p>
+    <div className="step-indicator">
+      <div className="step-information">
+        <span className="step-number">
+          PASO {currentStepNumber} DE {steps.length}
+        </span>
 
-      <progress
-        value={currentStepNumber}
-        max={steps.length}
-      />
+        <span className="step-name">
+          {stepNames[currentStep]}
+        </span>
+      </div>
+
+      <div className="progress-track">
+        <div
+          className="progress-value"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
     </div>
   )
 }
