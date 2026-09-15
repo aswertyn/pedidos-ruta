@@ -4,6 +4,9 @@ import AgentSelector from './components/AgentSelector'
 import CustomerSelector from './components/CustomerSelector'
 import ConsigneeSelector from './components/ConsigneeSelector'
 import OrderItemForm from './components/OrderItemForm'
+import StepIndicator from './components/StepIndicator'
+import OrderDetailsForm from './components/OrderDetailsForm'
+import OrderReview from './components/OrderReview'
 
 import { agents } from './data/agents'
 import { customers } from './data/customers'
@@ -14,6 +17,8 @@ import type { Customer } from './types/customer'
 import type { Consignee } from './types/consignee'
 import type { ManualConsignee } from './types/manualConsignee'
 import type { OrderItem } from './types/orderItem'
+import type { OrderStep } from './types/orderStep'
+import type { DeliveryPriority, Order } from './types/order'
 
 function App() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
@@ -24,6 +29,15 @@ function App() {
   const [manualConsignee, setManualConsignee] =
     useState<ManualConsignee | null>(null)
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
+  const [currentStep, setCurrentStep] = useState<OrderStep>('agent')
+  const [orderDate, setOrderDate] = useState('')
+  const [deliveryPriority, setDeliveryPriority] = useState<DeliveryPriority>('scheduled')
+  const [purchaseOrder, setPurchaseOrder] = useState('')
+  const [observations, setObservations] = useState('')
+
+  const goToStep = (step: OrderStep) => {
+    setCurrentStep(step)
+  }
 
   const handleAddItem = (item: OrderItem) => {
     setOrderItems((currentItems) => [
@@ -79,28 +93,100 @@ function App() {
     )
     : []
 
+  const hasValidManualConsignee =
+    manualConsignee !== null &&
+    manualConsignee.address.trim() !== '' &&
+    manualConsignee.city.trim() !== '' &&
+    manualConsignee.receivingHours.trim() !== ''
+
+  const hasDeliveryDestination =
+    selectedConsignee !== null || hasValidManualConsignee
+
+  const order: Order | null =
+    selectedAgent && selectedCustomer
+      ? {
+        agentNumber: selectedAgent.agentNumber,
+        customerNumber: selectedCustomer.customerNumber,
+
+        consigneeNumber:
+          selectedConsignee?.consigneeNumber ?? null,
+
+        manualConsignee:
+          selectedConsignee ? null : manualConsignee,
+
+        items: orderItems,
+
+        observations,
+        orderDate,
+        deliveryPriority,
+        purchaseOrder,
+      }
+      : null
+
   return (
     <main>
-      <h1>Levantamiento de pedidos</h1>
-      <p>Aplicación para captura de pedidos en ruta.</p>
+      <header>
+        <h1>Levantamiento de pedidos</h1>
+        <p>Aplicación para captura de pedidos en ruta.</p>
+      </header>
 
-      <AgentSelector
-        agents={agents}
-        selectedAgent={selectedAgent}
-        onAgentChange={handleAgentChange}
-      />
+      <StepIndicator currentStep={currentStep} />
 
-      {selectedAgent && (
-        <CustomerSelector
-          customers={agentCustomers}
-          selectedCustomer={selectedCustomer}
-          onCustomerChange={handleCustomerChange}
-        />
+      {currentStep === 'agent' && (
+        <section>
+          {/* <p>Paso 1 de 6</p> */}
+
+          <AgentSelector
+            agents={agents}
+            selectedAgent={selectedAgent}
+            onAgentChange={handleAgentChange}
+          />
+
+          {selectedAgent && (
+            <button
+              type="button"
+              onClick={() => goToStep('customer')}
+            >
+              Continuar
+            </button>
+          )}
+        </section>
       )}
 
-      {selectedCustomer && (
-        <>
+      {currentStep === 'customer' && (
+        <section>
+          {/* <p>Paso 2 de 6</p> */}
+
+          <CustomerSelector
+            customers={agentCustomers}
+            selectedCustomer={selectedCustomer}
+            onCustomerChange={handleCustomerChange}
+          />
+
+          <button
+            type="button"
+            onClick={() => goToStep('agent')}
+          >
+            Volver
+          </button>
+
+          {selectedCustomer && (
+            <button
+              type="button"
+              onClick={() => goToStep('delivery')}
+            >
+              Continuar
+            </button>
+          )}
+        </section>
+      )}
+
+      {currentStep === 'delivery' && (
+        <section>
+          {/* <p>Paso 3 de 6</p> */}
+
           <ConsigneeSelector
+            key={selectedCustomer?.customerNumber}
             consignees={customerConsignees}
             selectedConsignee={selectedConsignee}
             manualConsignee={manualConsignee}
@@ -108,39 +194,125 @@ function App() {
             onManualConsigneeChange={setManualConsignee}
           />
 
-          <OrderItemForm onAddItem={handleAddItem} />
-        </>
-      )}
+          <button
+            type="button"
+            onClick={() => goToStep('customer')}
+          >
+            Volver
+          </button>
 
-      {orderItems.length > 0 && (
-        <section>
-          <h2>Productos del pedido</h2>
-
-          {orderItems.map((item, index) => (
-            <div key={`${item.productNumber}-${index}`}>
-              <p>
-                <strong>Modelo:</strong> {item.model}
-              </p>
-
-              <p>
-                <strong>Tipo:</strong> {item.productType}
-              </p>
-
-              <p>
-                <strong>Tamaño:</strong> {item.bedSize}
-              </p>
-
-              <p>
-                <strong>Cantidad:</strong> {item.quantity}
-              </p>
-
-              <p>
-                <strong>Precio:</strong> ${item.price}
-              </p>
-            </div>
-          ))}
+          {hasDeliveryDestination && (
+            <button
+              type="button"
+              onClick={() => goToStep('products')}
+            >
+              Continuar
+            </button>
+          )}
         </section>
       )}
+
+      {currentStep === 'products' && (
+        <section>
+          {/* <p>Paso 4 de 6</p> */}
+
+          <OrderItemForm onAddItem={handleAddItem} />
+
+          {orderItems.length > 0 && (
+            <div>
+              <h2>Productos agregados</h2>
+
+              {orderItems.map((item, index) => (
+                <div key={`${item.productNumber}-${index}`}>
+                  <p>
+                    <strong>Modelo:</strong> {item.model}
+                  </p>
+
+                  <p>
+                    <strong>Tamaño:</strong> {item.bedSize}
+                  </p>
+
+                  <p>
+                    <strong>Cantidad:</strong> {item.quantity}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => goToStep('delivery')}
+          >
+            Volver
+          </button>
+
+          {orderItems.length > 0 && (
+            <button
+              type="button"
+              onClick={() => goToStep('details')}
+            >
+              Continuar
+            </button>
+          )}
+        </section>
+      )}
+
+      {currentStep === 'details' && (
+        <section>
+          <OrderDetailsForm
+            orderDate={orderDate}
+            deliveryPriority={deliveryPriority}
+            purchaseOrder={purchaseOrder}
+            observations={observations}
+            onOrderDateChange={setOrderDate}
+            onDeliveryPriorityChange={setDeliveryPriority}
+            onPurchaseOrderChange={setPurchaseOrder}
+            onObservationsChange={setObservations}
+          />
+
+          <button
+            type="button"
+            onClick={() => goToStep('products')}
+          >
+            Volver
+          </button>
+
+          {orderDate && (
+            <button
+              type="button"
+              onClick={() => goToStep('review')}
+            >
+              Revisar pedido
+            </button>
+          )}
+        </section>
+      )}
+      
+      {currentStep === 'review' &&
+        order &&
+        selectedAgent &&
+        selectedCustomer && (
+          <section>
+            <OrderReview
+              order={order}
+              agent={selectedAgent}
+              customer={selectedCustomer}
+              consignee={selectedConsignee}
+            />
+
+            <button
+              type="button"
+              onClick={() => goToStep('details')}
+            >
+              Volver
+            </button>
+
+            <button type="button">
+              Enviar pedido
+            </button>
+          </section>
+        )}
     </main>
   )
 }
