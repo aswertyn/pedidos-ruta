@@ -399,16 +399,22 @@ function App() {
               consignee={selectedConsignee}
             />
 
-            <button
-              type="button"
-              onClick={() => goToStep('details')}
-            >
-              Volver
-            </button>
+            <div className="step-actions">
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => goToStep('details')}
+              >
+                Volver
+              </button>
 
-            <button type="button">
-              Enviar pedido
-            </button>
+              <button
+                className="primary-button"
+                type="button"
+              >
+                Enviar pedido
+              </button>
+            </div>
           </section>
         )}
     </main>
