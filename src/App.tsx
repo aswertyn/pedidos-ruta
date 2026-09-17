@@ -20,6 +20,11 @@ import type { OrderItem } from './types/orderItem'
 import type { OrderStep } from './types/orderStep'
 import type { DeliveryPriority, Order } from './types/order'
 
+const currencyFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+})
+
 function App() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [selectedCustomer, setSelectedCustomer] =
@@ -298,14 +303,14 @@ function App() {
                       <div>
                         <span>Precio</span>
                         <strong>
-                          ${item.price.toFixed(2)}
+                          {currencyFormatter.format(item.price)}
                         </strong>
                       </div>
 
                       <div>
                         <span>Subtotal</span>
                         <strong>
-                          ${(item.quantity * item.price).toFixed(2)}
+                          {currencyFormatter.format(item.quantity * item.price)}
                         </strong>
                       </div>
                     </div>
@@ -317,14 +322,13 @@ function App() {
                 <span>Total del pedido</span>
 
                 <strong>
-                  $
-                  {orderItems
-                    .reduce(
+                  {currencyFormatter.format(
+                    orderItems.reduce(
                       (total, item) =>
                         total + item.quantity * item.price,
                       0,
-                    )
-                    .toFixed(2)}
+                    ),
+                  )}
                 </strong>
               </div>
             </section>

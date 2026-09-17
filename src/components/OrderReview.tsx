@@ -166,8 +166,10 @@ function OrderReview({
                 </div>
 
                 <strong>
-                  ${(item.quantity * item.price).toFixed(2)}
-                </strong>
+                  {new Intl.NumberFormat('es-MX', {
+                    style: 'currency',
+                    currency: 'MXN',
+                  }).format(item.quantity * item.price)}                </strong>
               </div>
 
               <p>
@@ -177,7 +179,11 @@ function OrderReview({
               </p>
 
               <p>
-                {item.quantity} × ${item.price.toFixed(2)}
+                {item.quantity} ×{' '}
+                {new Intl.NumberFormat('es-MX', {
+                  style: 'currency',
+                  currency: 'MXN',
+                }).format(item.price)}
               </p>
             </article>
           ))}
@@ -185,7 +191,12 @@ function OrderReview({
 
         <div className="review-total">
           <span>Total</span>
-          <strong>${total.toFixed(2)}</strong>
+          <strong>
+            {new Intl.NumberFormat('es-MX', {
+              style: 'currency',
+              currency: 'MXN',
+            }).format(total)}
+          </strong>
         </div>
       </div>
 
