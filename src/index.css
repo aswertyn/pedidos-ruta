@@ -50,10 +50,11 @@ button {
 .app-container {
   width: 100%;
   max-width: 640px;
-  min-height: 100vh;
-
+  height: 100dvh;
   margin: 0 auto;
-  padding: 24px 18px 60px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .app-header {
@@ -376,14 +377,123 @@ button {
 
 .step-actions {
   display: flex;
+  width: 100%;
   gap: 12px;
+  margin-top: 0;
+  overflow: visible;
 
-  margin-top: 24px;
+  transition: gap 0.35s ease;
 }
 
-.step-actions .primary-button {
+.step-actions .primary-button,
+.step-actions .secondary-button {
+  flex-grow: 0;
+  flex-shrink: 0;
+
+  min-width: 0;
   margin-top: 0;
-  flex: 1;
+
+  white-space: nowrap;
+  overflow: hidden;
+
+  transition:
+    width 0.35s ease,
+    opacity 0.2s ease,
+    transform 0.35s ease,
+    padding 0.35s ease,
+    border-width 0.35s ease;
+}
+
+/* ───────────────
+   DOS BOTONES
+   ─────────────── */
+
+.step-actions.both-buttons {
+  gap: 12px;
+}
+
+.step-actions.both-buttons .navigation-back,
+.step-actions.both-buttons .navigation-next {
+  width: calc(50% - 6px);
+
+  opacity: 1;
+  transform: translateX(0);
+
+  pointer-events: auto;
+}
+
+/* ───────────────
+   SOLO CONTINUAR
+   ─────────────── */
+
+.step-actions.only-next {
+  gap: 0;
+}
+
+.step-actions.only-next .navigation-back {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+
+  opacity: 0;
+  transform: translateX(-24px);
+
+  pointer-events: none;
+}
+
+.step-actions.only-next .navigation-next {
+  width: 100%;
+  padding-left: 0;
+  padding-right: 0;
+  border-left-width: 0;
+  border-right-width: 0;
+
+  opacity: 1;
+  transform: translateX(0);
+
+  pointer-events: auto;
+}
+
+/* ───────────────
+   SOLO VOLVER
+   ─────────────── */
+
+.step-actions.only-back {
+  gap: 0;
+}
+
+.step-actions.only-back .navigation-back {
+  width: 100%;
+
+  opacity: 1;
+  transform: translateX(0);
+
+  pointer-events: auto;
+}
+
+.step-actions.only-back .navigation-next {
+  width: 0;
+
+  opacity: 0;
+  transform: translateX(24px);
+
+  pointer-events: none;
+}
+
+.navigation-back:disabled,
+.navigation-next:disabled {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .step-actions,
+  .step-actions .primary-button,
+  .step-actions .secondary-button {
+    transition: none;
+  }
 }
 
 .secondary-button {
@@ -605,16 +715,29 @@ button {
 
 .form-control {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 54px;
-
   padding: 0 14px;
-
+  box-sizing: border-box;
   background-color: var(--color-white);
   border: 2px solid var(--color-border);
   border-radius: 12px;
-
   color: var(--color-text);
   outline: none;
+}
+
+input[type='date'].form-control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  height: 54px;
+  min-height: 54px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  line-height: 1;
 }
 
 .form-control:focus {
@@ -1004,7 +1127,7 @@ button {
   gap: 14px;
 }
 
-.review-data > div {
+.review-data>div {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -1047,7 +1170,7 @@ button {
   gap: 16px;
 }
 
-.review-product-header > div {
+.review-product-header>div {
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -1075,4 +1198,28 @@ button {
 .review-total strong {
   color: var(--color-primary);
   font-size: 1.35rem;
+}
+
+.app-top {
+  flex-shrink: 0;
+  padding: 20px 18px 0;
+  background-color: var(--color-background);
+}
+
+.app-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 18px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-bottom {
+  flex-shrink: 0;
+  padding: 12px 18px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background-color: var(--color-background);
+  border-top: 1px solid var(--color-border);
 }
