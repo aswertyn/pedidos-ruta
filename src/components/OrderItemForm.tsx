@@ -13,16 +13,69 @@ interface OrderItemFormProps {
   onAddItem: (item: OrderItem) => void
 }
 
+const manualProductTypes: ProductType[] = [
+  'mattress',
+  'box',
+  'platform',
+]
+
+const manualBedSizes: BedSize[] = [
+  'ind',
+  'mat',
+  'Q.S.',
+  'K.S.',
+]
+
 function OrderItemForm({ onAddItem }: OrderItemFormProps) {
   const [productNumber, setProductNumber] = useState('')
-  const [productType, setProductType] = useState<ProductType | ''>('')
-  const [bedSize, setBedSize] = useState<BedSize | ''>('')
+  const [manualModel, setManualModel] = useState('')
+  const [isManual, setIsManual] = useState(false)
+
+  const [productType, setProductType] =
+    useState<ProductType | ''>('')
+
+  const [bedSize, setBedSize] =
+    useState<BedSize | ''>('')
+
   const [quantity, setQuantity] = useState('1')
   const [price, setPrice] = useState('')
 
   const selectedProduct = products.find(
     (product) => product.productNumber === productNumber,
   )
+
+  const availableTypes = isManual
+    ? manualProductTypes
+    : selectedProduct?.availableTypes ?? []
+
+  const availableSizes = isManual
+    ? manualBedSizes
+    : selectedProduct?.availableSizes ?? []
+
+  const canConfigureProduct = isManual
+    ? manualModel.trim() !== ''
+    : selectedProduct !== undefined
+
+  const resetProductConfiguration = () => {
+    setProductType('')
+    setBedSize('')
+    setQuantity('1')
+    setPrice('')
+  }
+
+  const enableManualMode = () => {
+    setIsManual(true)
+    setProductNumber('')
+    setManualModel('')
+    resetProductConfiguration()
+  }
+
+  const enableCatalogMode = () => {
+    setIsManual(false)
+    setProductNumber('')
+    setManualModel('')
+    resetProductConfiguration()
+  }
 
   const increaseQuantity = () => {
     const currentQuantity = Number(quantity)
@@ -50,8 +103,13 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
     const numericQuantity = Number(quantity)
     const numericPrice = Number(price)
 
+    const model = isManual
+      ? manualModel.trim()
+      : selectedProduct?.model ?? ''
+
     if (
-      !selectedProduct ||
+      !model ||
+      (!isManual && !selectedProduct) ||
       !productType ||
       !bedSize ||
       !Number.isInteger(numericQuantity) ||
@@ -63,17 +121,21 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
     }
 
     const item: OrderItem = {
-      productNumber: selectedProduct.productNumber,
-      model: selectedProduct.model,
+      productNumber: isManual
+        ? ''
+        : selectedProduct!.productNumber,
+      model,
       productType,
       bedSize,
       quantity: numericQuantity,
       price: numericPrice,
+      isManual,
     }
 
     onAddItem(item)
 
     setProductNumber('')
+    setManualModel('')
     setProductType('')
     setBedSize('')
     setQuantity('1')
@@ -88,34 +150,70 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
         Selecciona el producto y sus características.
       </p>
 
-      <label className="form-label">
-        Modelo
+      {!isManual ? (
+        <>
+          <label className="form-label">
+            Modelo
 
-        <select
-          className="form-control"
-          value={productNumber}
-          onChange={(event) => {
-            setProductNumber(event.target.value)
-            setProductType('')
-            setBedSize('')
-          }}
-        >
-          <option value="">
-            Seleccione un modelo
-          </option>
-
-          {products.map((product) => (
-            <option
-              key={product.productNumber}
-              value={product.productNumber}
+            <select
+              className="form-control"
+              value={productNumber}
+              onChange={(event) => {
+                setProductNumber(event.target.value)
+                setProductType('')
+                setBedSize('')
+              }}
             >
-              {product.productNumber} - {product.model}
-            </option>
-          ))}
-        </select>
-      </label>
+              <option value="">
+                Seleccione un modelo
+              </option>
 
-      {selectedProduct && (
+              {products.map((product) => (
+                <option
+                  key={product.productNumber}
+                  value={product.productNumber}
+                >
+                  {product.productNumber} - {product.model}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            className="manual-model-button"
+            type="button"
+            onClick={enableManualMode}
+          >
+            + Capturar modelo manualmente
+          </button>
+        </>
+      ) : (
+        <>
+          <label className="form-label">
+            Modelo
+
+            <input
+              className="form-control"
+              type="text"
+              value={manualModel}
+              placeholder="Escribe el modelo"
+              onChange={(event) => {
+                setManualModel(event.target.value)
+              }}
+            />
+          </label>
+
+          <button
+            className="manual-model-button"
+            type="button"
+            onClick={enableCatalogMode}
+          >
+            ← Seleccionar del catálogo
+          </button>
+        </>
+      )}
+
+      {canConfigureProduct && (
         <div className="product-options">
           <div className="option-group">
             <span className="option-title">
@@ -123,12 +221,13 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
             </span>
 
             <div className="option-buttons">
-              {selectedProduct.availableTypes.map((type) => (
+              {availableTypes.map((type) => (
                 <button
                   key={type}
                   type="button"
-                  className={`option-button ${productType === type ? 'selected' : ''
-                    }`}
+                  className={`option-button ${
+                    productType === type ? 'selected' : ''
+                  }`}
                   onClick={() => setProductType(type)}
                 >
                   {type === 'mattress'
@@ -147,12 +246,13 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
             </span>
 
             <div className="option-buttons size-buttons">
-              {selectedProduct.availableSizes.map((size) => (
+              {availableSizes.map((size) => (
                 <button
                   key={size}
                   type="button"
-                  className={`option-button ${bedSize === size ? 'selected' : ''
-                    }`}
+                  className={`option-button ${
+                    bedSize === size ? 'selected' : ''
+                  }`}
                   onClick={() => setBedSize(size)}
                 >
                   {size === 'ind'
@@ -190,13 +290,18 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
                   value={quantity}
                   onChange={(event) => {
                     const value = event.target.value
+
                     if (value === '') {
                       setQuantity('')
                       return
                     }
+
                     const number = Number(value)
-                    // Evitar decimales
-                    if (Number.isInteger(number) && number >= 1) {
+
+                    if (
+                      Number.isInteger(number) &&
+                      number >= 1
+                    ) {
                       setQuantity(value)
                     }
                   }}

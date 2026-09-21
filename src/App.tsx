@@ -166,7 +166,7 @@ function App() {
     if (currentStep === 'details') goToStep('review')
 
     if (currentStep === 'review') {
-      // Aquí irá posteriormente el envío del pedido.
+      // Aquí va el envío del pedido.
     }
   }
 
@@ -352,13 +352,12 @@ function App() {
 
       <div className="app-bottom">
         <div
-          className={`step-actions ${
-            showBackButton && showNextButton
+          className={`step-actions ${showBackButton && showNextButton
               ? 'both-buttons'
               : showBackButton
                 ? 'only-back'
                 : 'only-next'
-          }`}
+            }`}
         >
           <button
             className="secondary-button navigation-back"

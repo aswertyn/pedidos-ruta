@@ -7,4 +7,5 @@ export interface OrderItem {
   bedSize: BedSize
   quantity: number
   price: number
+  isManual: Boolean
 }

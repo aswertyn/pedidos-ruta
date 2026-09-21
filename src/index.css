@@ -704,6 +704,34 @@ button {
   font-size: 1.5rem;
 }
 
+.manual-model-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 14px;
+
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+
+  color: var(--color-primary);
+
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.manual-model-button:hover {
+  background-color: #fffaf0;
+  border-color: var(--color-gold);
+}
+
+.manual-model-button:active {
+  background-color: #fff5db;
+}
+
 .form-label {
   display: flex;
   flex-direction: column;
