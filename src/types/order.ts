@@ -1,5 +1,6 @@
 import type { OrderItem } from './orderItem'
 import type { ManualConsignee } from './manualConsignee'
+import type { PolyethyleneBag } from './polyethyleneBag'
 
 export type DeliveryPriority =
   | 'urgent'
@@ -14,6 +15,7 @@ export interface Order {
   manualConsignee: ManualConsignee | null
 
   items: OrderItem[]
+  polyethyleneBag: PolyethyleneBag[]
 
   observations: string
   orderDate: string

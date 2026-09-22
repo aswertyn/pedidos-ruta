@@ -7,6 +7,7 @@ import OrderItemForm from './components/OrderItemForm'
 import StepIndicator from './components/StepIndicator'
 import OrderDetailsForm from './components/OrderDetailsForm'
 import OrderReview from './components/OrderReview'
+import PolyethyleneBagForm from './components/PolyethyleneBagForm'
 
 import { agents } from './data/agents'
 import { customers } from './data/customers'
@@ -19,6 +20,7 @@ import type { ManualConsignee } from './types/manualConsignee'
 import type { OrderItem } from './types/orderItem'
 import type { OrderStep } from './types/orderStep'
 import type { DeliveryPriority, Order } from './types/order'
+import type { PolyethyleneBag } from './types/polyethyleneBag'
 
 const currencyFormatter = new Intl.NumberFormat('es-MX', {
   style: 'currency',
@@ -40,6 +42,20 @@ function App() {
   const [deliveryPriority, setDeliveryPriority] = useState<DeliveryPriority>('scheduled')
   const [purchaseOrder, setPurchaseOrder] = useState('')
   const [observations, setObservations] = useState('')
+  const [polyethyleneBags, setPolyethyleneBags] = useState<PolyethyleneBag[]>([])
+
+  const handleAddBag = (bag: PolyethyleneBag) => {
+    setPolyethyleneBags((currentBags) => [
+      ...currentBags,
+      bag,
+    ])
+  }
+
+  const handleRemoveBag = (index: number) => {
+    setPolyethyleneBags((currentBags) =>
+      currentBags.filter((_, currentIndex) => currentIndex !== index)
+    )
+  }
 
   const goToStep = (step: OrderStep) => {
     setCurrentStep(step)
@@ -132,6 +148,7 @@ function App() {
           selectedConsignee ? null : manualConsignee,
 
         items: orderItems,
+        polyethyleneBag: polyethyleneBags,
 
         observations,
         orderDate,
@@ -225,6 +242,43 @@ function App() {
         {currentStep === 'products' && (
           <section>
             <OrderItemForm onAddItem={handleAddItem} />
+            <PolyethyleneBagForm onAddBag={handleAddBag} />
+
+            {polyethyleneBags.length > 0 && (
+              <section className="added-bags">
+                <h3>Bolsas agregadas</h3>
+
+                {polyethyleneBags.map((bag, index) => (
+                  <div className="added-bag-card" key={index}>
+                    <div>
+                      <strong>Clave: {bag.key}</strong>
+
+                      <p>
+                        Cantidad: {bag.quantity}
+                      </p>
+
+                      <p>
+                        Precio: {currencyFormatter.format(bag.price)}
+                      </p>
+
+                      <p>
+                        Subtotal: {currencyFormatter.format(
+                          bag.quantity * bag.price,
+                        )}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => handleRemoveBag(index)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+              </section>
+            )}
 
             {orderItems.length > 0 && (
               <section className="order-items-summary">
@@ -353,10 +407,10 @@ function App() {
       <div className="app-bottom">
         <div
           className={`step-actions ${showBackButton && showNextButton
-              ? 'both-buttons'
-              : showBackButton
-                ? 'only-back'
-                : 'only-next'
+            ? 'both-buttons'
+            : showBackButton
+              ? 'only-back'
+              : 'only-next'
             }`}
         >
           <button
