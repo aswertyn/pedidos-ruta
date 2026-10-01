@@ -86,6 +86,7 @@ function App() {
     setSelectedConsignee(null)
     setManualConsignee(null)
     setOrderItems([])
+    setPolyethyleneBags([])
   }
 
   const handleCustomerChange = (customerNumber: string) => {
@@ -97,6 +98,7 @@ function App() {
     setSelectedConsignee(null)
     setManualConsignee(null)
     setOrderItems([])
+    setPolyethyleneBags([])
   }
 
   const handleConsigneeChange = (consigneeNumber: string) => {
@@ -156,6 +158,16 @@ function App() {
         purchaseOrder,
       }
       : null
+
+  const productsTotal = orderItems.reduce(
+    (total, item) => total + item.quantity * item.price,
+    0,
+  )
+  const bagsTotal = polyethyleneBags.reduce(
+    (total, bag) => total + bag.quantity * bag.price,
+    0,
+  )
+  const orderTotal = productsTotal + bagsTotal
 
   const showBackButton = currentStep !== 'agent'
 
@@ -241,135 +253,22 @@ function App() {
 
         {currentStep === 'products' && (
           <section>
-            <OrderItemForm onAddItem={handleAddItem} />
-            <PolyethyleneBagForm onAddBag={handleAddBag} />
+            <OrderItemForm
+              items={orderItems}
+              onAddItem={handleAddItem}
+              onRemoveItem={handleRemoveItem}
+            />
+            <PolyethyleneBagForm
+              bags={polyethyleneBags}
+              onAddBag={handleAddBag}
+              onRemoveBag={handleRemoveBag}
+            />
 
-            {polyethyleneBags.length > 0 && (
-              <section className="added-bags">
-                <h3>Bolsas agregadas</h3>
-
-                {polyethyleneBags.map((bag, index) => (
-                  <div className="added-bag-card" key={index}>
-                    <div>
-                      <strong>Clave: {bag.key}</strong>
-
-                      <p>
-                        Cantidad: {bag.quantity}
-                      </p>
-
-                      <p>
-                        Precio: {currencyFormatter.format(bag.price)}
-                      </p>
-
-                      <p>
-                        Subtotal: {currencyFormatter.format(
-                          bag.quantity * bag.price,
-                        )}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => handleRemoveBag(index)}
-                    >
-                      Eliminar
-                    </button>
-                  </div>
-                ))}
-              </section>
-            )}
-
-            {orderItems.length > 0 && (
-              <section className="order-items-summary">
-                <div className="summary-header">
-                  <h2>Productos agregados</h2>
-
-                  <span className="item-count">
-                    {orderItems.length}
-                  </span>
-                </div>
-
-                <div className="order-items-list">
-                  {orderItems.map((item, index) => (
-                    <article
-                      className="order-item-card"
-                      key={`${item.productNumber}-${index}`}
-                    >
-                      <div className="order-item-header">
-                        <div>
-                          <span className="order-item-number">
-                            {item.productNumber}
-                          </span>
-
-                          <h3>{item.model}</h3>
-
-                          <p>
-                            {item.productType === 'mattress'
-                              ? 'Colchón'
-                              : item.productType === 'box'
-                                ? 'Box'
-                                : 'Tarima'}
-                            {' · '}
-                            {item.bedSize === 'ind'
-                              ? 'Individual'
-                              : item.bedSize === 'mat'
-                                ? 'Matrimonial'
-                                : item.bedSize === 'Q.S.'
-                                  ? 'Queen Size'
-                                  : 'King Size'}
-                          </p>
-                        </div>
-
-                        <button
-                          className="remove-item-button"
-                          type="button"
-                          onClick={() => handleRemoveItem(index)}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-
-                      <div className="order-item-values">
-                        <div>
-                          <span>Cantidad</span>
-                          <strong>{item.quantity}</strong>
-                        </div>
-
-                        <div>
-                          <span>Precio</span>
-                          <strong>
-                            {currencyFormatter.format(item.price)}
-                          </strong>
-                        </div>
-
-                        <div>
-                          <span>Subtotal</span>
-                          <strong>
-                            {currencyFormatter.format(
-                              item.quantity * item.price,
-                            )}
-                          </strong>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-
-                <div className="order-total">
-                  <span>Total del pedido</span>
-
-                  <strong>
-                    {currencyFormatter.format(
-                      orderItems.reduce(
-                        (total, item) =>
-                          total + item.quantity * item.price,
-                        0,
-                      ),
-                    )}
-                  </strong>
-                </div>
-              </section>
+            {(orderItems.length > 0 || polyethyleneBags.length > 0) && (
+              <div className="order-total">
+                <span>Total del pedido</span>
+                <strong>{currencyFormatter.format(orderTotal)}</strong>
+              </div>
             )}
           </section>
         )}

@@ -1259,3 +1259,95 @@ input[type='date'].form-control {
 .polyethylene-bag-form .add-product-button {
   margin-top: 24px;
 }
+
+.items-accordion {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  margin-top: 12px;
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+.items-accordion summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.items-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion-count {
+  background: #fff4d6;
+  color: #795500;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.accordion-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.items-accordion[open] .accordion-chevron {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  border-top: 1px solid var(--color-border);
+  padding: 0 13px;
+}
+
+.accordion-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0f6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.accordion-item:last-child {
+  border-bottom: 0;
+}
+
+.accordion-item-main {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.accordion-item-main strong {
+  display: block;
+  font-size: 14px;
+}
+
+.accordion-item-main span {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.accordion-item-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.accordion-remove-button {
+  flex-shrink: 0;
+  border: 0;
+  background: #fff0f0;
+  color: #aa3344;
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+}

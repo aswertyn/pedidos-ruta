@@ -1,14 +1,33 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { PolyethyleneBag } from '../types/polyethyleneBag'
 
 interface PolyethyleneBagFormProps {
+    bags: PolyethyleneBag[]
     onAddBag: (bag: PolyethyleneBag) => void
+    onRemoveBag: (index: number) => void
 }
 
+const currencyFormatter = new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+})
+
 function PolyethyleneBagForm({
+    bags,
     onAddBag,
+    onRemoveBag,
 }: PolyethyleneBagFormProps) {
+    const detailsRef = useRef<HTMLDetailsElement>(null)
+    const previousCount = useRef(0)
+
+    useEffect(() => {
+        if (bags.length > previousCount.current && detailsRef.current) {
+            detailsRef.current.open = true
+        }
+        previousCount.current = bags.length
+    }, [bags.length])
+
     const [key, setKey] = useState('')
     const [quantity, setQuantity] = useState('1')
     const [price, setPrice] = useState('')
@@ -64,7 +83,7 @@ function PolyethyleneBagForm({
 
     return (
         <section className="polyethylene-bag-form">
-            <h2>Bolsa Polietileno</h2>
+            <h2>Bolsa Polietileno (opcional)</h2>
 
             <p className="selector-help">
                 Agrega las bolsas requeridas por el cliente.
@@ -175,6 +194,36 @@ function PolyethyleneBagForm({
             >
                 + Agregar bolsa
             </button>
+            {bags.length > 0 && (
+                <details className="items-accordion" ref={detailsRef}>
+                    <summary>
+                        Bolsas agregadas
+                        <span className="accordion-count">{bags.length}</span>
+                        <span className="accordion-chevron" aria-hidden="true">⌄</span>
+                    </summary>
+                    <div className="accordion-content">
+                        {bags.map((bag, index) => (
+                            <article className="accordion-item" key={index}>
+                                <div className="accordion-item-main">
+                                    <strong>{bag.key}</strong>
+                                    <span>{bag.quantity} × {currencyFormatter.format(bag.price)}</span>
+                                </div>
+                                <strong className="accordion-item-price">
+                                    {currencyFormatter.format(bag.quantity * bag.price)}
+                                </strong>
+                                <button
+                                    className="accordion-remove-button"
+                                    type="button"
+                                    aria-label={`Eliminar bolsa ${bag.key}`}
+                                    onClick={() => onRemoveBag(index)}
+                                >
+                                    ×
+                                </button>
+                            </article>
+                        ))}
+                    </div>
+                </details>
+            )}
         </section>
     )
 }

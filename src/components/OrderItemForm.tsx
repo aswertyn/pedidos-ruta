@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { products } from '../data/products'
 
@@ -10,8 +10,15 @@ import type {
 import type { OrderItem } from '../types/orderItem'
 
 interface OrderItemFormProps {
+  items: OrderItem[]
   onAddItem: (item: OrderItem) => void
+  onRemoveItem: (index: number) => void
 }
+
+const currencyFormatter = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'MXN',
+})
 
 const manualProductTypes: ProductType[] = [
   'mattress',
@@ -26,7 +33,17 @@ const manualBedSizes: BedSize[] = [
   'K.S.',
 ]
 
-function OrderItemForm({ onAddItem }: OrderItemFormProps) {
+function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+  const previousCount = useRef(0)
+
+  useEffect(() => {
+    if (items.length > previousCount.current && detailsRef.current) {
+      detailsRef.current.open = true
+    }
+    previousCount.current = items.length
+  }, [items.length])
+
   const [productNumber, setProductNumber] = useState('')
   const [manualModel, setManualModel] = useState('')
   const [isManual, setIsManual] = useState(false)
@@ -357,6 +374,47 @@ function OrderItemForm({ onAddItem }: OrderItemFormProps) {
             + Agregar producto
           </button>
         </div>
+      )}
+      {items.length > 0 && (
+        <details className="items-accordion" ref={detailsRef}>
+          <summary>
+            Productos agregados
+            <span className="accordion-count">{items.length}</span>
+            <span className="accordion-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div className="accordion-content">
+            {items.map((item, index) => (
+              <article className="accordion-item" key={index}>
+                <div className="accordion-item-main">
+                  <strong>{item.model}</strong>
+                  <span>
+                    {item.productType === 'mattress'
+                      ? 'Colchón'
+                      : item.productType === 'box' ? 'Box' : 'Tarima'}
+                    {' · '}
+                    {item.bedSize === 'ind'
+                      ? 'Individual'
+                      : item.bedSize === 'mat'
+                        ? 'Matrimonial'
+                        : item.bedSize === 'Q.S.' ? 'Queen Size' : 'King Size'}
+                    {' · '}{item.quantity} × {currencyFormatter.format(item.price)}
+                  </span>
+                </div>
+                <strong className="accordion-item-price">
+                  {currencyFormatter.format(item.quantity * item.price)}
+                </strong>
+                <button
+                  className="accordion-remove-button"
+                  type="button"
+                  aria-label={`Eliminar producto ${item.model}`}
+                  onClick={() => onRemoveItem(index)}
+                >
+                  ×
+                </button>
+              </article>
+            ))}
+          </div>
+        </details>
       )}
     </section>
   )
