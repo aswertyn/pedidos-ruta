@@ -16,11 +16,23 @@ function OrderReview({
   customer,
   consignee,
 }: OrderReviewProps) {
-  const total = order.items.reduce(
+  const currencyFormatter = new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN',
+  })
+  const productsTotal = order.items.reduce(
     (currentTotal, item) =>
       currentTotal + item.quantity * item.price,
     0,
   )
+
+  const bagsTotal = order.polyethyleneBag.reduce(
+    (currentTotal, bag) =>
+      currentTotal + bag.quantity * bag.price,
+    0,
+  )
+
+  const total = productsTotal + bagsTotal
 
   const getProductTypeName = (productType: string) => {
     switch (productType) {
@@ -142,7 +154,7 @@ function OrderReview({
       </div>
 
       <div className="review-section">
-        <div className="summary-header">
+        <div className="summary-header review-subsection-header">
           <h3>Productos</h3>
 
           <span className="item-count">
@@ -158,18 +170,20 @@ function OrderReview({
             >
               <div className="review-product-header">
                 <div>
+                {!item.isManual && (
                   <span className="order-item-number">
                     {item.productNumber}
                   </span>
+                  )}
 
                   <strong>{item.model}</strong>
                 </div>
 
                 <strong>
-                  {new Intl.NumberFormat('es-MX', {
-                    style: 'currency',
-                    currency: 'MXN',
-                  }).format(item.quantity * item.price)}                </strong>
+                  {currencyFormatter.format(
+                    item.quantity * item.price,
+                  )}
+                </strong>
               </div>
 
               <p>
@@ -180,22 +194,52 @@ function OrderReview({
 
               <p>
                 {item.quantity} ×{' '}
-                {new Intl.NumberFormat('es-MX', {
-                  style: 'currency',
-                  currency: 'MXN',
-                }).format(item.price)}
+                {currencyFormatter.format(item.price)}
               </p>
             </article>
           ))}
         </div>
 
+        {order.polyethyleneBag.length > 0 && (
+          <div className="review-bags">
+            <div className="summary-header review-subsection-header">
+              <h3>Bolsa Polietileno</h3>
+
+              <span className="item-count">
+                {order.polyethyleneBag.length}
+              </span>
+            </div>
+
+            <div className="review-products">
+              {order.polyethyleneBag.map((bag, index) => (
+                <article
+                  className="review-product"
+                  key={`${bag.key}-${index}`}
+                >
+                  <div className="review-product-header">
+                    <strong>{bag.key}</strong>
+
+                    <strong>
+                      {currencyFormatter.format(
+                        bag.quantity * bag.price,
+                      )}
+                    </strong>
+                  </div>
+
+                  <p>
+                    {bag.quantity} ×{' '}
+                    {currencyFormatter.format(bag.price)}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="review-total">
           <span>Total</span>
           <strong>
-            {new Intl.NumberFormat('es-MX', {
-              style: 'currency',
-              currency: 'MXN',
-            }).format(total)}
+            {currencyFormatter.format(total)}
           </strong>
         </div>
       </div>
