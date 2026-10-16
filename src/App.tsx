@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import AgentSelector from './components/AgentSelector'
 import CustomerSelector from './components/CustomerSelector'
@@ -8,6 +8,9 @@ import StepIndicator from './components/StepIndicator'
 import OrderDetailsForm from './components/OrderDetailsForm'
 import OrderReview from './components/OrderReview'
 import PolyethyleneBagForm from './components/PolyethyleneBagForm'
+import LoginPage from './pages/LoginPage'
+import type { AuthUser } from './services/authService'
+import { getCurrentUser, logout } from './services/authService'
 
 import { agents } from './data/agents'
 import { customers } from './data/customers'
@@ -28,6 +31,34 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
 })
 
 function App() {
+  const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null)
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  useEffect(() => {
+    let active = true
+
+    async function checkSession() {
+      try {
+        const user = await getCurrentUser()
+
+        if (active) {
+          setAuthenticatedUser(user)
+        }
+      } catch (error) {
+        console.error('Error al comprobar la sesión:', error)
+      } finally {
+        if (active) {
+          setCheckingSession(false)
+        }
+      }
+    }
+
+    checkSession()
+
+    return () => {
+      active = false
+    }
+  }, [])
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [selectedCustomer, setSelectedCustomer] =
     useState<Customer | null>(null)
@@ -43,6 +74,30 @@ function App() {
   const [purchaseOrder, setPurchaseOrder] = useState('')
   const [observations, setObservations] = useState('')
   const [polyethyleneBags, setPolyethyleneBags] = useState<PolyethyleneBag[]>([])
+
+  const handleLogout = async () => {
+  try {
+    await logout()
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error)
+    alert('No fue posible cerrar la sesión. Inténtalo nuevamente.')
+    return
+  }
+
+  setAuthenticatedUser(null)
+
+  setSelectedAgent(null)
+  setSelectedCustomer(null)
+  setSelectedConsignee(null)
+  setManualConsignee(null)
+  setOrderItems([])
+  setPolyethyleneBags([])
+  setCurrentStep('agent')
+  setOrderDate('')
+  setDeliveryPriority('scheduled')
+  setPurchaseOrder('')
+  setObservations('')
+}
 
   const handleAddBag = (bag: PolyethyleneBag) => {
     setPolyethyleneBags((currentBags) => [
@@ -206,11 +261,30 @@ function App() {
     return 'Continuar'
   }
 
+  if (checkingSession) {
+    return <main className="app-container">Comprobando sesión...</main>
+  }
+
+  if (!authenticatedUser) {
+    return <LoginPage onLoginSuccess={setAuthenticatedUser} />
+  }
+
   return (
     <main className="app-container">
       <div className="app-top">
         <header className="app-header">
-          <h1>Levantamiento de pedidos</h1>
+          <div className="header-top">
+            <h1>Levantamiento de pedidos</h1>
+
+            <button
+              type="button"
+              className="logout-button"
+              onClick={handleLogout}
+            >
+              Salir
+            </button>
+          </div>
+
           <p>Aplicación para captura de pedidos en ruta.</p>
         </header>
 

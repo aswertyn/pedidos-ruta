@@ -3,6 +3,7 @@ import type { Agent } from '../types/agent'
 import type { Customer } from '../types/customer'
 import type { Consignee } from '../types/consignee'
 
+
 interface OrderReviewProps {
   order: Order
   agent: Agent
@@ -170,10 +171,10 @@ function OrderReview({
             >
               <div className="review-product-header">
                 <div>
-                {!item.isManual && (
-                  <span className="order-item-number">
-                    {item.productNumber}
-                  </span>
+                  {!item.isManual && (
+                    <span className="order-item-number">
+                      {item.productNumber}
+                    </span>
                   )}
 
                   <strong>{item.model}</strong>

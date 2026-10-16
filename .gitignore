@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+
+# Pruebas locales del backend
+/server/tests/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

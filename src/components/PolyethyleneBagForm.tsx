@@ -98,7 +98,7 @@ function PolyethyleneBagForm({
                     onChange={(event) => setKey(event.target.value)}
                 >
                     <option value="">Seleccione una clave</option>
-                    <option value="PCEM-1">PCEM-1</option>
+                    <option value="PCEM-I">PCEM-I</option>
                     <option value="PCEM-M">PCEM-M</option>
                     <option value="PCEM-Q">PCEM-Q</option>
                     <option value="PCEM-K">PCEM-K</option>
