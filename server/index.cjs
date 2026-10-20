@@ -4,6 +4,7 @@ const session = require('express-session')
 const { consultarEsperaOTP } = require('./otpDatabase.cjs')
 const { solicitarCodigoOTP,
     validarCodigoOTP, } = require('./otpManager.cjs')
+const SqlSessionStore = require('./sqlSessionStore.cjs')
 
 require('dotenv').config({
     path: require('node:path').join(__dirname, '..', '.env'),
@@ -23,6 +24,7 @@ app.use(
     session({
         name: 'pedidos.sid',
         secret: process.env.SESSION_SECRET,
+        store: new SqlSessionStore(poolPromise),
         resave: false,
         saveUninitialized: false,
         cookie: {
