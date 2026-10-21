@@ -5,6 +5,7 @@ const { consultarEsperaOTP } = require('./otpDatabase.cjs')
 const { solicitarCodigoOTP,
     validarCodigoOTP, } = require('./otpManager.cjs')
 const SqlSessionStore = require('./sqlSessionStore.cjs')
+const { iniciarLimpiezaSesiones } = require('./sessionCleanup.cjs')
 
 require('dotenv').config({
     path: require('node:path').join(__dirname, '..', '.env'),
@@ -413,4 +414,6 @@ app.post('/api/auth/logout', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`API ejecutándose en http://localhost:${PORT}`)
+
+    iniciarLimpiezaSesiones()
 })
