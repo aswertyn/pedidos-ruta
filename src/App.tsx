@@ -8,6 +8,7 @@ import StepIndicator from './components/StepIndicator'
 import OrderDetailsForm from './components/OrderDetailsForm'
 import OrderReview from './components/OrderReview'
 import PolyethyleneBagForm from './components/PolyethyleneBagForm'
+import PhotoCapture from './components/PhotoCapture'
 import LoginPage from './pages/LoginPage'
 import type { AuthUser } from './services/authService'
 import { getCurrentUser, logout } from './services/authService'
@@ -33,7 +34,7 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
 function App() {
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
-
+const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
   useEffect(() => {
     let active = true
 
@@ -85,6 +86,7 @@ function App() {
   }
 
   setAuthenticatedUser(null)
+  setCaptureMode(null)
 
   setSelectedAgent(null)
   setSelectedCustomer(null)
@@ -267,6 +269,90 @@ function App() {
 
   if (!authenticatedUser) {
     return <LoginPage onLoginSuccess={setAuthenticatedUser} />
+  }
+
+  if (captureMode === null) {
+    return (
+      <main className="app-container">
+        <div className="app-top">
+          <header className="app-header">
+            <div className="header-top">
+              <h1>Levantamiento de pedidos</h1>
+
+              <button
+                type="button"
+                className="logout-button"
+                onClick={handleLogout}
+              >
+                Salir
+              </button>
+            </div>
+
+            <p>Selecciona cómo deseas registrar tu pedido.</p>
+          </header>
+        </div>
+
+        <div className="app-content">
+          <section>
+            <h2>Método de captura</h2>
+
+            <div className="capture-options">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => setCaptureMode('manual')}
+              >
+                Captura manual
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setCaptureMode('photo')}
+              >
+                Captura por fotografía
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    )
+  }
+
+  if (captureMode === 'photo') {
+    return (
+      <main className="app-container">
+        <div className="app-top">
+          <header className="app-header">
+            <div className="header-top">
+              <h1>Captura por fotografía</h1>
+
+              <button
+                type="button"
+                className="logout-button"
+                onClick={handleLogout}
+              >
+                Salir
+              </button>
+            </div>
+
+            <p>Registra una nota de pedido mediante una fotografía.</p>
+          </header>
+        </div>
+
+        <div className="app-content">
+          <PhotoCapture />
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setCaptureMode(null)}
+          >
+            Volver a métodos de captura
+          </button>
+        </div>
+      </main>
+    )
   }
 
   return (

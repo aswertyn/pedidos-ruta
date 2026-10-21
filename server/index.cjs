@@ -6,6 +6,7 @@ const { solicitarCodigoOTP,
     validarCodigoOTP, } = require('./otpManager.cjs')
 const SqlSessionStore = require('./sqlSessionStore.cjs')
 const { iniciarLimpiezaSesiones } = require('./sessionCleanup.cjs')
+const multer = require('multer')
 
 require('dotenv').config({
     path: require('node:path').join(__dirname, '..', '.env'),
@@ -14,6 +15,22 @@ require('dotenv').config({
 
 const app = express()
 const PORT = 3001
+const uploadFoto = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024,
+        files: 1,
+    },
+    fileFilter: (req, file, callback) => {
+        const tiposPermitidos = ['image/jpeg', 'image/png']
+
+        if (!tiposPermitidos.includes(file.mimetype)) {
+            return callback(new Error('Solo se permiten imágenes JPG o PNG'))
+        }
+
+        callback(null, true)
+    },
+})
 
 app.use(express.json())
 
@@ -411,6 +428,84 @@ app.post('/api/auth/logout', (req, res) => {
         })
     })
 })
+
+
+app.post('/api/hojas-ruta', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({
+            message: 'Debes iniciar sesión para subir fotografías',
+        })
+    }
+
+    uploadFoto.single('foto')(req, res, async (error) => {
+        if (error) {
+            return res.status(
+                error instanceof multer.MulterError ? 413 : 400
+            ).json({
+                message: error.message,
+            })
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                message: 'Debes seleccionar una fotografía',
+            })
+        }
+
+        const usuario = Number(req.session.user.usuario)
+
+        if (!Number.isSafeInteger(usuario) || usuario <= 0) {
+            return res.status(400).json({
+                message: 'El identificador del usuario no es válido',
+            })
+        }
+
+        const foto = req.file.buffer
+
+        const esJPEG =
+            foto.length >= 3 &&
+            foto[0] === 0xff &&
+            foto[1] === 0xd8 &&
+            foto[2] === 0xff
+
+        const esPNG =
+            foto.length >= 8 &&
+            foto.subarray(0, 8).equals(
+                Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+            )
+
+        const tipoValido =
+            (req.file.mimetype === 'image/jpeg' && esJPEG) ||
+            (req.file.mimetype === 'image/png' && esPNG)
+
+        if (!tipoValido) {
+            return res.status(400).json({
+                message: 'El contenido de la fotografía no es válido',
+            })
+        }
+
+        try {
+            const pool = await poolPromise
+
+            await pool.request()
+                .input('foto', sql.VarBinary(sql.MAX), foto)
+                .input('usuario', sql.Int, usuario)
+                .execute('sp_guardar_hoja_ruta')
+
+            return res.status(201).json({
+                message: 'Fotografía guardada correctamente',
+            })
+
+        } catch (error) {
+            console.error('Error al guardar fotografía:', error)
+
+            return res.status(500).json({
+                message: 'No fue posible guardar la fotografía',
+            })
+        }
+    })
+})
+
 
 app.listen(PORT, () => {
     console.log(`API ejecutándose en http://localhost:${PORT}`)
