@@ -4,6 +4,11 @@ import type { Consignee } from '../types/consignee'
 import type { ManualConsignee } from '../types/manualConsignee'
 
 interface ConsigneeSelectorProps {
+  consigneeName: string
+  onConsigneeNameChange: (value: string) => void
+  consigneePhone: string
+  onConsigneePhoneChange: (value: string) => void
+
   consignees: Consignee[]
   selectedConsignee: Consignee | null
   manualConsignee: ManualConsignee | null
@@ -12,6 +17,11 @@ interface ConsigneeSelectorProps {
 }
 
 function ConsigneeSelector({
+  consigneeName,
+  onConsigneeNameChange,
+  consigneePhone,
+  onConsigneePhoneChange,
+
   consignees,
   selectedConsignee,
   manualConsignee,
@@ -19,7 +29,7 @@ function ConsigneeSelector({
   onManualConsigneeChange,
 }: ConsigneeSelectorProps) {
   const [useManualAddress, setUseManualAddress] = useState(
-    consignees.length === 0,
+    selectedConsignee === null && (manualConsignee !== null || consignees.length === 0),
   )
 
   const handleConsigneeSelection = (consigneeNumber: string) => {
@@ -30,6 +40,14 @@ function ConsigneeSelector({
   const handleManualSelection = () => {
     setUseManualAddress(true)
     onConsigneeChange('')
+    if (!manualConsignee) {
+      onManualConsigneeChange({
+        address: '',
+        city: '',
+        receivingStartTime: '',
+        receivingEndTime: '',
+      })
+    }
   }
 
   return (
@@ -65,6 +83,7 @@ function ConsigneeSelector({
                     Consignación {consignee.consigneeNumber}
                   </span>
 
+                  <span>{consignee.name} ? {consignee.phone}</span>
                   <span className="consignee-address">
                     {consignee.address}
                   </span>
@@ -126,6 +145,32 @@ function ConsigneeSelector({
       {useManualAddress && (
         <div className="manual-address-form">
           <h3>Dirección de entrega</h3>
+
+      <label className="form-label">
+        Nombre del consignado
+        <input
+          className="form-control"
+          type="text"
+          maxLength={150}
+          value={consigneeName}
+          onChange={(event) => onConsigneeNameChange(event.target.value)}
+          placeholder="Nombre del consignado"
+        />
+      </label>
+
+      <label className="form-label">
+        Teléfono del consignado
+        <input
+          className="form-control"
+          type="tel"
+          maxLength={30}
+          value={consigneePhone}
+          onChange={(event) => onConsigneePhoneChange(event.target.value)}
+          placeholder="Teléfono del consignado"
+        />
+      </label>
+
+
 
           <label>
             Dirección

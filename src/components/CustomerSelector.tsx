@@ -3,12 +3,14 @@ import { useState } from 'react'
 import type { Customer } from '../types/customer'
 
 interface CustomerSelectorProps {
+
   customers: Customer[]
   selectedCustomer: Customer | null
   onCustomerChange: (customerNumber: string) => void
 }
 
 function CustomerSelector({
+
   customers,
   selectedCustomer,
   onCustomerChange,
@@ -66,6 +68,9 @@ function CustomerSelector({
                   {customer.name}
                 </span>
 
+                <span>{customer.address}</span>
+                <span>{customer.phone}</span>
+                <span>Condiciones: {customer.conditions || 'Sin especificar'}</span>
                 <span className="customer-city">
                   {customer.city}
                 </span>

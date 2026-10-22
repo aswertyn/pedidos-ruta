@@ -83,6 +83,34 @@ function OrderReview({
       </p>
 
       <div className="review-section">
+        <h3>Datos adicionales</h3>
+        <div className="review-data">
+          <div>
+            <span>Folio (ingreso manual)</span>
+            <strong>{order.folio || 'Sin especificar'}</strong>
+          </div>
+          <div>
+            <span>Condiciones (opcional)</span>
+            <strong>{order.conditions || 'Sin especificar'}</strong>
+          </div>
+          <div>
+            <span>Teléfono del cliente</span>
+            <strong>{order.customerPhone || 'Sin especificar'}</strong>
+          </div>
+          <div>
+            <span>Nombre del consignado</span>
+            <strong>{order.consigneeName || 'Sin especificar'}</strong>
+          </div>
+          <div>
+            <span>Teléfono del consignado</span>
+            <strong>{order.consigneePhone || 'Sin especificar'}</strong>
+          </div>
+          <div><span>Dirección del cliente</span><strong>{customer.address}</strong></div>
+          <div><span>Población del cliente</span><strong>{customer.city}</strong></div>
+        </div>
+      </div>
+
+      <div className="review-section">
         <h3>Agente y cliente</h3>
 
         <div className="review-data">

@@ -10,6 +10,8 @@ import type {
 import type { OrderItem } from '../types/orderItem'
 
 interface OrderItemFormProps {
+  initialItem?: OrderItem
+  onUpdateItem?: (index: number, item: OrderItem) => void
   items: OrderItem[]
   onAddItem: (item: OrderItem) => void
   onRemoveItem: (index: number) => void
@@ -33,9 +35,24 @@ const manualBedSizes: BedSize[] = [
   'K.S.',
 ]
 
-function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
+function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateItem }: OrderItemFormProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null)
   const previousCount = useRef(0)
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const [editingIndex, setEditingIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (editingIndex === null) return
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialog.showModal()
+    return () => {
+      dialog.close()
+      document.body.style.overflow = previousOverflow
+    }
+  }, [editingIndex])
 
   useEffect(() => {
     if (items.length > previousCount.current && detailsRef.current) {
@@ -44,18 +61,19 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
     previousCount.current = items.length
   }, [items.length])
 
-  const [productNumber, setProductNumber] = useState('')
-  const [manualModel, setManualModel] = useState('')
-  const [isManual, setIsManual] = useState(false)
+  const [productNumber, setProductNumber] = useState(initialItem?.productNumber ?? '')
+  const [manualModel, setManualModel] = useState(initialItem?.isManual ? initialItem.model : '')
+  const [isManual, setIsManual] = useState(Boolean(initialItem?.isManual))
 
   const [productType, setProductType] =
-    useState<ProductType | ''>('')
+    useState<ProductType | ''>(initialItem?.productType ?? '')
 
   const [bedSize, setBedSize] =
-    useState<BedSize | ''>('')
+    useState<BedSize | ''>(initialItem?.bedSize ?? '')
 
-  const [quantity, setQuantity] = useState('1')
-  const [price, setPrice] = useState('')
+  const [quantity, setQuantity] = useState(String(initialItem?.quantity ?? 1))
+  const [price, setPrice] = useState(initialItem ? String(initialItem.price) : '')
+  const [submitted, setSubmitted] = useState(false)
 
   const selectedProduct = products.find(
     (product) => product.productNumber === productNumber,
@@ -73,7 +91,20 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
     ? manualModel.trim() !== ''
     : selectedProduct !== undefined
 
+  const errors = {
+    model: isManual
+      ? (!manualModel.trim() ? 'Escribe el modelo.' : manualModel.trim().length > 150 ? 'El modelo admite hasta 150 caracteres.' : '')
+      : (!selectedProduct ? 'Selecciona un modelo del catálogo.' : ''),
+    type: !productType || !availableTypes.includes(productType) ? 'Selecciona un tipo disponible para el modelo.' : '',
+    size: !bedSize || !availableSizes.includes(bedSize) ? 'Selecciona un tamaño disponible para el modelo.' : '',
+    quantity: !/^\d+$/.test(quantity) || !Number.isSafeInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > 9999
+      ? 'Ingresa una cantidad entera entre 1 y 9999.' : '',
+    price: !/^\d+(\.\d{1,2})?$/.test(price) || !Number.isFinite(Number(price)) || Number(price) < 0.01 || Number(price) > 999999.99
+      ? 'Ingresa un precio entre 0.01 y 999999.99, con hasta dos decimales.' : '',
+  }
+
   const resetProductConfiguration = () => {
+    setSubmitted(false)
     setProductType('')
     setBedSize('')
     setQuantity('1')
@@ -102,7 +133,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
       return
     }
 
-    setQuantity(String(currentQuantity + 1))
+    setQuantity(String(Math.min(9999, currentQuantity + 1)))
   }
 
   const decreaseQuantity = () => {
@@ -124,16 +155,8 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
       ? manualModel.trim()
       : selectedProduct?.model ?? ''
 
-    if (
-      !model ||
-      (!isManual && !selectedProduct) ||
-      !productType ||
-      !bedSize ||
-      !Number.isInteger(numericQuantity) ||
-      numericQuantity < 1 ||
-      !Number.isFinite(numericPrice) ||
-      numericPrice <= 0
-    ) {
+    setSubmitted(true)
+    if (Object.values(errors).some(Boolean) || !productType || !bedSize) {
       return
     }
 
@@ -150,6 +173,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
     }
 
     onAddItem(item)
+    setSubmitted(false)
 
     setProductNumber('')
     setManualModel('')
@@ -161,12 +185,13 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
 
   return (
     <section className="order-item-form">
-      <h2>Agregar producto</h2>
+      <h2>{initialItem ? 'Editar producto' : 'Agregar producto'}</h2>
 
       <p className="selector-help">
         Selecciona el producto y sus características.
       </p>
 
+      <form className="item-entry-form" noValidate onSubmit={(event) => { event.preventDefault(); handleSubmit() }}>
       {!isManual ? (
         <>
           <label className="form-label">
@@ -174,11 +199,11 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
 
             <select
               className="form-control"
+              aria-invalid={submitted && !!errors.model}
               value={productNumber}
               onChange={(event) => {
                 setProductNumber(event.target.value)
-                setProductType('')
-                setBedSize('')
+                resetProductConfiguration()
               }}
             >
               <option value="">
@@ -212,6 +237,8 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
             <input
               className="form-control"
               type="text"
+              maxLength={150}
+              aria-invalid={submitted && !!errors.model}
               value={manualModel}
               placeholder="Escribe el modelo"
               onChange={(event) => {
@@ -229,8 +256,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
           </button>
         </>
       )}
-
-      {canConfigureProduct && (
+      {(canConfigureProduct || isManual) && (
         <div className="product-options">
           <div className="option-group">
             <span className="option-title">
@@ -283,7 +309,6 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
               ))}
             </div>
           </div>
-
           <div className="quantity-price-grid">
             <div className="option-group">
               <span className="option-title">
@@ -305,23 +330,10 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
                   step="1"
                   inputMode="numeric"
                   value={quantity}
-                  onChange={(event) => {
-                    const value = event.target.value
-
-                    if (value === '') {
-                      setQuantity('')
-                      return
-                    }
-
-                    const number = Number(value)
-
-                    if (
-                      Number.isInteger(number) &&
-                      number >= 1
-                    ) {
-                      setQuantity(value)
-                    }
-                  }}
+                  aria-label="Cantidad"
+                  aria-invalid={submitted && !!errors.quantity}
+                  max="9999"
+                  onChange={(event) => setQuantity(event.target.value)}
                 />
 
                 <button
@@ -342,39 +354,28 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
 
                 <input
                   type="number"
-                  min="0.1"
+                  min="0.01"
                   step="0.01"
                   inputMode="decimal"
                   placeholder="0.00"
                   value={price}
-                  onChange={(event) => {
-                    const value = event.target.value
-
-                    if (value === '') {
-                      setPrice('')
-                      return
-                    }
-
-                    const number = Number(value)
-
-                    if (number > 0) {
-                      setPrice(value)
-                    }
-                  }}
+                  aria-label="Precio unitario"
+                  aria-invalid={submitted && !!errors.price}
+                  max="999999.99"
+                  onChange={(event) => setPrice(event.target.value)}
                 />
               </div>
             </label>
           </div>
-
-          <button
-            className="primary-button add-product-button"
-            type="button"
-            onClick={handleSubmit}
-          >
-            + Agregar producto
-          </button>
         </div>
       )}
+      <div className="validation-message" role="alert" aria-live="polite">
+        {submitted ? Object.values(errors).find(Boolean) : ''}
+      </div>
+      <button className="primary-button add-product-button" type="submit">
+        {initialItem ? 'Guardar cambios' : '+ Agregar producto'}
+      </button>
+      </form>
       {items.length > 0 && (
         <details className="items-accordion" ref={detailsRef}>
           <summary>
@@ -403,6 +404,11 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
                 <strong className="accordion-item-price">
                   {currencyFormatter.format(item.quantity * item.price)}
                 </strong>
+                {onUpdateItem && (
+                  <button type="button" className="edit-product-button" onClick={() => setEditingIndex(index)} aria-label={`Editar producto ${item.model}`}>
+                    Editar
+                  </button>
+                )}
                 <button
                   className="accordion-remove-button"
                   type="button"
@@ -415,6 +421,17 @@ function OrderItemForm({ items, onAddItem, onRemoveItem }: OrderItemFormProps) {
             ))}
           </div>
         </details>
+      )}
+      {editingIndex !== null && items[editingIndex] && (
+        <dialog ref={dialogRef} className="product-edit-dialog" aria-label="Editar producto" onCancel={() => setEditingIndex(null)} onClose={() => setEditingIndex(null)}>
+          <OrderItemForm
+            initialItem={items[editingIndex]}
+            items={[]}
+            onAddItem={(item) => { onUpdateItem?.(editingIndex, item); setEditingIndex(null) }}
+            onRemoveItem={() => {}}
+          />
+          <button type="button" className="secondary-button modal-cancel" onClick={() => setEditingIndex(null)}>Cancelar</button>
+        </dialog>
       )}
     </section>
   )

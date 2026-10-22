@@ -8,6 +8,12 @@ export type DeliveryPriority =
   | 'scheduled'
 
 export interface Order {
+  folio: string
+  conditions: string
+  customerPhone: string
+  consigneeName: string
+  consigneePhone: string
+
   agentNumber: string
   customerNumber: string
 

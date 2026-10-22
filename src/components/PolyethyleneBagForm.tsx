@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import type { PolyethyleneBag } from '../types/polyethyleneBag'
 
 interface PolyethyleneBagFormProps {
+    initialBag?: PolyethyleneBag
+    onUpdateBag?: (index: number, bag: PolyethyleneBag) => void
     bags: PolyethyleneBag[]
     onAddBag: (bag: PolyethyleneBag) => void
     onRemoveBag: (index: number) => void
@@ -14,12 +16,30 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
 })
 
 function PolyethyleneBagForm({
+    initialBag,
+    onUpdateBag,
     bags,
     onAddBag,
     onRemoveBag,
 }: PolyethyleneBagFormProps) {
     const detailsRef = useRef<HTMLDetailsElement>(null)
     const previousCount = useRef(0)
+    const validationId = useId()
+    const dialogRef = useRef<HTMLDialogElement>(null)
+    const [editingIndex, setEditingIndex] = useState<number | null>(null)
+
+    useEffect(() => {
+        if (editingIndex === null) return
+        const dialog = dialogRef.current
+        if (!dialog) return
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        dialog.showModal()
+        return () => {
+            dialog.close()
+            document.body.style.overflow = previousOverflow
+        }
+    }, [editingIndex])
 
     useEffect(() => {
         if (bags.length > previousCount.current && detailsRef.current) {
@@ -28,9 +48,18 @@ function PolyethyleneBagForm({
         previousCount.current = bags.length
     }, [bags.length])
 
-    const [key, setKey] = useState('')
-    const [quantity, setQuantity] = useState('1')
-    const [price, setPrice] = useState('')
+    const [key, setKey] = useState(initialBag?.key ?? '')
+    const [quantity, setQuantity] = useState(String(initialBag?.quantity ?? 1))
+    const [price, setPrice] = useState(initialBag ? String(initialBag.price) : '')
+    const [submitted, setSubmitted] = useState(false)
+    const errors = {
+        key: !['PCEM-I', 'PCEM-M', 'PCEM-Q', 'PCEM-K'].includes(key)
+            ? 'Selecciona una clave de bolsa válida.' : '',
+        quantity: !/^\d+$/.test(quantity) || !Number.isSafeInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > 9999
+            ? 'Ingresa una cantidad entera entre 1 y 9999.' : '',
+        price: !/^\d+(\.\d{1,2})?$/.test(price) || !Number.isFinite(Number(price)) || Number(price) < 0.01 || Number(price) > 999999.99
+            ? 'Ingresa un precio entre 0.01 y 999999.99, con hasta dos decimales.' : '',
+    }
 
     const increaseQuantity = () => {
         const currentQuantity = Number(quantity)
@@ -40,7 +69,7 @@ function PolyethyleneBagForm({
             return
         }
 
-        setQuantity(String(currentQuantity + 1))
+        setQuantity(String(Math.min(9999, currentQuantity + 1)))
     }
 
     const decreaseQuantity = () => {
@@ -58,15 +87,8 @@ function PolyethyleneBagForm({
         const numericQuantity = Number(quantity)
         const numericPrice = Number(price)
 
-        if (
-            key.trim() === '' ||
-            !Number.isInteger(numericQuantity) ||
-            numericQuantity < 1 ||
-            !Number.isFinite(numericPrice) ||
-            numericPrice <= 0
-        ) {
-            return
-        }
+        setSubmitted(true)
+        if (Object.values(errors).some(Boolean)) return
 
         const bag: PolyethyleneBag = {
             key: key.trim(),
@@ -75,6 +97,7 @@ function PolyethyleneBagForm({
         }
 
         onAddBag(bag)
+        setSubmitted(false)
 
         setKey('')
         setQuantity('1')
@@ -83,17 +106,20 @@ function PolyethyleneBagForm({
 
     return (
         <section className="polyethylene-bag-form">
-            <h2>Bolsa Polietileno (opcional)</h2>
+            <h2>{initialBag ? 'Editar bolsa' : 'Bolsa Polietileno (opcional)'}</h2>
 
             <p className="selector-help">
                 Agrega las bolsas requeridas por el cliente.
             </p>
 
+            <form className="item-entry-form" noValidate onSubmit={(event) => { event.preventDefault(); handleSubmit() }}>
             <label className="form-label">
                 Clave
 
                 <select
                     className="form-control"
+                    aria-invalid={submitted && !!errors.key}
+                    aria-describedby={validationId}
                     value={key}
                     onChange={(event) => setKey(event.target.value)}
                 >
@@ -126,23 +152,11 @@ function PolyethyleneBagForm({
                             step="1"
                             inputMode="numeric"
                             value={quantity}
-                            onChange={(event) => {
-                                const value = event.target.value
-
-                                if (value === '') {
-                                    setQuantity('')
-                                    return
-                                }
-
-                                const number = Number(value)
-
-                                if (
-                                    Number.isInteger(number) &&
-                                    number >= 1
-                                ) {
-                                    setQuantity(value)
-                                }
-                            }}
+                            aria-label="Cantidad de bolsas"
+                            aria-invalid={submitted && !!errors.quantity}
+                            aria-describedby={validationId}
+                            max="9999"
+                            onChange={(event) => setQuantity(event.target.value)}
                         />
 
                         <button
@@ -163,37 +177,31 @@ function PolyethyleneBagForm({
 
                         <input
                             type="number"
-                            min="0.1"
+                            min="0.01"
                             step="0.01"
                             inputMode="decimal"
                             placeholder="0.00"
                             value={price}
-                            onChange={(event) => {
-                                const value = event.target.value
-
-                                if (value === '') {
-                                    setPrice('')
-                                    return
-                                }
-
-                                const number = Number(value)
-
-                                if (number > 0) {
-                                    setPrice(value)
-                                }
-                            }}
+                            aria-label="Precio unitario de bolsa"
+                            aria-invalid={submitted && !!errors.price}
+                            aria-describedby={validationId}
+                            max="999999.99"
+                            onChange={(event) => setPrice(event.target.value)}
                         />
                     </div>
                 </label>
             </div>
 
+            <div id={validationId} className="validation-message" role="alert" aria-live="polite">
+                {submitted ? Object.values(errors).find(Boolean) : ''}
+            </div>
             <button
                 className="primary-button add-product-button"
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
             >
-                + Agregar bolsa
+                {initialBag ? 'Guardar cambios' : '+ Agregar bolsa'}
             </button>
+            </form>
             {bags.length > 0 && (
                 <details className="items-accordion" ref={detailsRef}>
                     <summary>
@@ -211,6 +219,11 @@ function PolyethyleneBagForm({
                                 <strong className="accordion-item-price">
                                     {currencyFormatter.format(bag.quantity * bag.price)}
                                 </strong>
+                                {onUpdateBag && (
+                                    <button type="button" className="edit-product-button" onClick={() => setEditingIndex(index)} aria-label={`Editar bolsa ${bag.key}`}>
+                                        Editar
+                                    </button>
+                                )}
                                 <button
                                     className="accordion-remove-button"
                                     type="button"
@@ -223,6 +236,17 @@ function PolyethyleneBagForm({
                         ))}
                     </div>
                 </details>
+            )}
+            {editingIndex !== null && bags[editingIndex] && (
+                <dialog ref={dialogRef} className="product-edit-dialog" aria-label="Editar bolsa" onCancel={() => setEditingIndex(null)} onClose={() => setEditingIndex(null)}>
+                    <PolyethyleneBagForm
+                        initialBag={bags[editingIndex]}
+                        bags={[]}
+                        onAddBag={(bag) => { onUpdateBag?.(editingIndex, bag); setEditingIndex(null) }}
+                        onRemoveBag={() => {}}
+                    />
+                    <button type="button" className="secondary-button modal-cancel" onClick={() => setEditingIndex(null)}>Cancelar</button>
+                </dialog>
             )}
         </section>
     )

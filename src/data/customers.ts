@@ -6,6 +6,8 @@ export const customers: Customer[] = [
     name: 'Mueblería Centro',
     address: 'Av. Vallarta 1200',
     city: 'Guadalajara',
+    phone: '3300000001',
+    conditions: 'Contado',
     agentNumber: '1',
   },
   {
@@ -13,6 +15,8 @@ export const customers: Customer[] = [
     name: 'Distribuidora Pacífico',
     address: 'Av. México 850',
     city: 'Puerto Vallarta',
+    phone: '3300000002',
+    conditions: 'Contado',
     agentNumber: '1',
   },
   {
@@ -20,6 +24,8 @@ export const customers: Customer[] = [
     name: 'Muebles del Norte',
     address: 'Blvd. Durango 450',
     city: 'Durango',
+    phone: '3300000003',
+    conditions: 'Contado',
     agentNumber: '2',
   },
   {
@@ -27,6 +33,8 @@ export const customers: Customer[] = [
     name: 'Descanso Zacatecas',
     address: 'Av. Universidad 310',
     city: 'Zacatecas',
+    phone: '3300000004',
+    conditions: 'Contado',
     agentNumber: '2',
   },
   {
@@ -34,6 +42,8 @@ export const customers: Customer[] = [
     name: 'Colchones Guadalajara',
     address: 'Av. Alcalde 720',
     city: 'Guadalajara',
+    phone: '3300000005',
+    conditions: 'Contado',
     agentNumber: '3',
   },
 ]

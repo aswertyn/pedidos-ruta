@@ -73,6 +73,12 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
   // Declaración pendiente: Estado "programado" como predeterminado actualmente*
   const [deliveryPriority, setDeliveryPriority] = useState<DeliveryPriority>('scheduled')
   const [purchaseOrder, setPurchaseOrder] = useState('')
+  const [folio, setFolio] = useState('')
+  const [conditions, setConditions] = useState('')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [consigneeName, setConsigneeName] = useState('')
+  const [consigneePhone, setConsigneePhone] = useState('')
+
   const [observations, setObservations] = useState('')
   const [polyethyleneBags, setPolyethyleneBags] = useState<PolyethyleneBag[]>([])
 
@@ -98,6 +104,12 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
   setOrderDate('')
   setDeliveryPriority('scheduled')
   setPurchaseOrder('')
+  setFolio('')
+  setConditions('')
+  setCustomerPhone('')
+  setConsigneeName('')
+  setConsigneePhone('')
+
   setObservations('')
 }
 
@@ -139,6 +151,10 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
     )
 
     setSelectedAgent(agent ?? null)
+    setCustomerPhone('')
+    setConditions('')
+    setConsigneeName('')
+    setConsigneePhone('')
     setSelectedCustomer(null)
     setSelectedConsignee(null)
     setManualConsignee(null)
@@ -152,6 +168,10 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
     )
 
     setSelectedCustomer(customer ?? null)
+    setCustomerPhone(customer?.phone ?? '')
+    setConditions(customer?.conditions ?? '')
+    setConsigneeName('')
+    setConsigneePhone('')
     setSelectedConsignee(null)
     setManualConsignee(null)
     setOrderItems([])
@@ -166,6 +186,8 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
     )
 
     setSelectedConsignee(consignee ?? null)
+    setConsigneeName(consignee?.name ?? '')
+    setConsigneePhone(consignee?.phone ?? '')
   }
 
   const agentCustomers = selectedAgent
@@ -213,6 +235,12 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
         orderDate,
         deliveryPriority,
         purchaseOrder,
+        folio: folio.trim(),
+        conditions: conditions.trim(),
+        customerPhone: customerPhone.trim(),
+        consigneeName: consigneeName.trim(),
+        consigneePhone: consigneePhone.trim(),
+
       }
       : null
 
@@ -229,7 +257,7 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
   const showBackButton = currentStep !== 'agent'
 
   const showNextButton =
-    (currentStep === 'agent' && selectedAgent !== null) ||
+    (currentStep === 'agent' && selectedAgent !== null && folio.trim() !== '') ||
     (currentStep === 'customer' && selectedCustomer !== null) ||
     (currentStep === 'delivery' && hasDeliveryDestination) ||
     (currentStep === 'products' && orderItems.length > 0) ||
@@ -245,6 +273,8 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
   }
 
   const handleNext = () => {
+    if (!showNextButton || folio.trim() === '') return
+
     if (currentStep === 'agent') goToStep('customer')
     if (currentStep === 'customer') goToStep('delivery')
     if (currentStep === 'delivery') goToStep('products')
@@ -380,6 +410,21 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
       <div className="app-content">
         {currentStep === 'agent' && (
           <section>
+      <label className="form-label folio-field">
+        Folio (ingreso manual)
+        <input
+          className="form-control"
+          type="text"
+          maxLength={50}
+          value={folio}
+          required
+          aria-describedby="folio-help"
+          onChange={(event) => setFolio(event.target.value)}
+          placeholder="Folio (ingreso manual)"
+        />
+        <small id="folio-help">El folio es obligatorio para continuar.</small>
+      </label>
+
             <AgentSelector
               agents={agents}
               selectedAgent={selectedAgent}
@@ -391,6 +436,7 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
         {currentStep === 'customer' && (
           <section>
             <CustomerSelector
+
               customers={agentCustomers}
               selectedCustomer={selectedCustomer}
               onCustomerChange={handleCustomerChange}
@@ -401,6 +447,11 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
         {currentStep === 'delivery' && (
           <section>
             <ConsigneeSelector
+              consigneeName={consigneeName}
+              onConsigneeNameChange={setConsigneeName}
+              consigneePhone={consigneePhone}
+              onConsigneePhoneChange={setConsigneePhone}
+
               key={selectedCustomer?.customerNumber}
               consignees={customerConsignees}
               selectedConsignee={selectedConsignee}
@@ -416,11 +467,13 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
             <OrderItemForm
               items={orderItems}
               onAddItem={handleAddItem}
+              onUpdateItem={(index, updatedItem) => setOrderItems((current) => current.map((item, itemIndex) => itemIndex === index ? updatedItem : item))}
               onRemoveItem={handleRemoveItem}
             />
             <PolyethyleneBagForm
               bags={polyethyleneBags}
               onAddBag={handleAddBag}
+              onUpdateBag={(index, updatedBag) => setPolyethyleneBags((current) => current.map((bag, bagIndex) => bagIndex === index ? updatedBag : bag))}
               onRemoveBag={handleRemoveBag}
             />
 
@@ -439,6 +492,7 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
               orderDate={orderDate}
               deliveryPriority={deliveryPriority}
               purchaseOrder={purchaseOrder}
+
               observations={observations}
               onOrderDateChange={setOrderDate}
               onDeliveryPriorityChange={setDeliveryPriority}

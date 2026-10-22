@@ -732,6 +732,10 @@ button {
   background-color: #fff5db;
 }
 
+.folio-field {
+  margin-bottom: 24px;
+}
+
 .form-label {
   display: flex;
   flex-direction: column;
@@ -914,6 +918,58 @@ input[type='date'].form-control {
 
 .add-product-button {
   margin-top: 0;
+}
+
+.product-edit-dialog {
+  width: min(600px, calc(100vw - 32px));
+  max-height: 85dvh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.product-edit-dialog::backdrop {
+  background: rgb(0 0 0 / 50%);
+}
+
+.modal-cancel {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.edit-product-button {
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--color-white);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.item-entry-form .validation-message {
+  min-height: 3em;
+  margin: 8px 0;
+  color: #b42318;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.item-entry-form .add-product-button {
+  margin-top: 0;
+  width: 100%;
+  border: none;
+}
+
+.item-entry-form [aria-invalid='true'] {
+  border-color: #b42318;
+}
+
+.order-item-form + .polyethylene-bag-form {
+  margin-top: 28px;
 }
 
 @media (max-width: 480px) {
