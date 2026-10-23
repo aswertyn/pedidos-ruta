@@ -507,6 +507,127 @@ app.post('/api/hojas-ruta', (req, res) => {
 })
 
 
+app.get('/api/hojas-ruta', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({
+            message: 'No autorizado'
+        })
+    }
+
+    try {
+        const pool = await poolPromise
+
+        const resultado = await pool.request()
+            .input('usuario', sql.Int, req.session.user.usuario)
+            .query(`
+                SELECT
+                    id,
+                    fecha,
+                    usuario,
+                    DATALENGTH(foto) AS tamano_bytes
+                FROM dbo.hoja_ruta
+                WHERE usuario = @usuario
+                ORDER BY fecha DESC, id DESC
+            `)
+
+        return res.json(resultado.recordset)
+
+    } catch (error) {
+        console.error('Error al consultar fotografías:', error)
+
+        return res.status(500).json({
+            message: 'Error al consultar fotografías'
+        })
+    }
+})
+
+app.get('/api/hojas-ruta/:id/foto', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({
+            message: 'No autorizado'
+        })
+    }
+
+    try {
+        const id = Number(req.params.id)
+        const usuario = Number(req.session.user.usuario)
+
+        if (!Number.isSafeInteger(id) || id <= 0) {
+            return res.status(400).json({
+                message: 'ID de fotografía inválido'
+            })
+        }
+
+        if (!Number.isSafeInteger(usuario)) {
+            return res.status(401).json({
+                message: 'Usuario inválido'
+            })
+        }
+
+        const pool = await poolPromise
+
+        const resultado = await pool.request()
+            .input('id', sql.Int, id)
+            .input('usuario', sql.Int, usuario)
+            .query(`
+                SELECT foto
+                FROM dbo.hoja_ruta
+                WHERE id = @id
+                  AND usuario = @usuario
+            `)
+
+        if (resultado.recordset.length === 0) {
+            return res.status(404).json({
+                message: 'Fotografía no encontrada'
+            })
+        }
+
+        const foto = resultado.recordset[0].foto
+
+        if (!foto || foto.length === 0) {
+            return res.status(404).json({
+                message: 'El registro no contiene una fotografía'
+            })
+        }
+
+        let tipo
+
+        if (
+            foto.length >= 3 &&
+            foto[0] === 0xff &&
+            foto[1] === 0xd8 &&
+            foto[2] === 0xff
+        ) {
+            tipo = 'image/jpeg'
+        } else if (
+            foto.length >= 8 &&
+            foto.subarray(0, 8).equals(
+                Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])
+            )
+        ) {
+            tipo = 'image/png'
+        } else {
+            return res.status(415).json({
+                message: 'Formato de imagen no reconocido'
+            })
+        }
+
+        res.setHeader('Content-Type', tipo)
+        res.setHeader('Cache-Control', 'private, no-store')
+        res.setHeader('X-Content-Type-Options', 'nosniff')
+
+        return res.send(foto)
+
+    } catch (error) {
+        console.error('Error al recuperar fotografía:', error)
+
+        return res.status(500).json({
+            message: 'Error al recuperar fotografía'
+        })
+    }
+})
+
+
 app.listen(PORT, () => {
     console.log(`API ejecutándose en http://localhost:${PORT}`)
 

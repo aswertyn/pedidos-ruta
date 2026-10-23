@@ -9,6 +9,7 @@ import OrderDetailsForm from './components/OrderDetailsForm'
 import OrderReview from './components/OrderReview'
 import PolyethyleneBagForm from './components/PolyethyleneBagForm'
 import PhotoCapture from './components/PhotoCapture'
+import PhotoGallery from './components/PhotoGallery'
 import LoginPage from './pages/LoginPage'
 import type { AuthUser } from './services/authService'
 import { getCurrentUser, logout } from './services/authService'
@@ -34,7 +35,7 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
 function App() {
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
-const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
+  const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | 'gallery' | null>(null)
   useEffect(() => {
     let active = true
 
@@ -83,35 +84,35 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
   const [polyethyleneBags, setPolyethyleneBags] = useState<PolyethyleneBag[]>([])
 
   const handleLogout = async () => {
-  try {
-    await logout()
-  } catch (error) {
-    console.error('Error al cerrar sesión:', error)
-    alert('No fue posible cerrar la sesión. Inténtalo nuevamente.')
-    return
+    try {
+      await logout()
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+      alert('No fue posible cerrar la sesión. Inténtalo nuevamente.')
+      return
+    }
+
+    setAuthenticatedUser(null)
+    setCaptureMode(null)
+
+    setSelectedAgent(null)
+    setSelectedCustomer(null)
+    setSelectedConsignee(null)
+    setManualConsignee(null)
+    setOrderItems([])
+    setPolyethyleneBags([])
+    setCurrentStep('agent')
+    setOrderDate('')
+    setDeliveryPriority('scheduled')
+    setPurchaseOrder('')
+    setFolio('')
+    setConditions('')
+    setCustomerPhone('')
+    setConsigneeName('')
+    setConsigneePhone('')
+
+    setObservations('')
   }
-
-  setAuthenticatedUser(null)
-  setCaptureMode(null)
-
-  setSelectedAgent(null)
-  setSelectedCustomer(null)
-  setSelectedConsignee(null)
-  setManualConsignee(null)
-  setOrderItems([])
-  setPolyethyleneBags([])
-  setCurrentStep('agent')
-  setOrderDate('')
-  setDeliveryPriority('scheduled')
-  setPurchaseOrder('')
-  setFolio('')
-  setConditions('')
-  setCustomerPhone('')
-  setConsigneeName('')
-  setConsigneePhone('')
-
-  setObservations('')
-}
 
   const handleAddBag = (bag: PolyethyleneBag) => {
     setPolyethyleneBags((currentBags) => [
@@ -342,8 +343,51 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
               >
                 Captura por fotografía
               </button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setCaptureMode('gallery')}
+              >
+                Ver fotografías registradas
+              </button>
             </div>
           </section>
+        </div>
+      </main>
+    )
+  }
+
+  if (captureMode === 'gallery') {
+    return (
+      <main className="app-container">
+        <div className="app-top">
+          <header className="app-header">
+            <div className="header-top">
+              <h1>Fotografías registradas</h1>
+
+              <button
+                type="button"
+                className="logout-button"
+                onClick={handleLogout}
+              >
+                Salir
+              </button>
+            </div>
+
+            <p>Consulta las fotografías que has registrado.</p>
+          </header>
+        </div>
+
+        <div className="app-content">
+          <PhotoGallery />
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => setCaptureMode(null)}
+          >
+            Volver a métodos de captura
+          </button>
         </div>
       </main>
     )
@@ -410,20 +454,20 @@ const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | null>(null)
       <div className="app-content">
         {currentStep === 'agent' && (
           <section>
-      <label className="form-label folio-field">
-        Folio (ingreso manual)
-        <input
-          className="form-control"
-          type="text"
-          maxLength={50}
-          value={folio}
-          required
-          aria-describedby="folio-help"
-          onChange={(event) => setFolio(event.target.value)}
-          placeholder="Folio (ingreso manual)"
-        />
-        <small id="folio-help">El folio es obligatorio para continuar.</small>
-      </label>
+            <label className="form-label folio-field">
+              Folio (ingreso manual)
+              <input
+                className="form-control"
+                type="text"
+                maxLength={50}
+                value={folio}
+                required
+                aria-describedby="folio-help"
+                onChange={(event) => setFolio(event.target.value)}
+                placeholder="Folio (ingreso manual)"
+              />
+              <small id="folio-help">El folio es obligatorio para continuar.</small>
+            </label>
 
             <AgentSelector
               agents={agents}
