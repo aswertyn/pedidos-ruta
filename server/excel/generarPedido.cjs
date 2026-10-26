@@ -28,9 +28,40 @@ const FILAS_TIPO = {
 // Las posiciones restantes se incorporarán cuando tengamos
 // el catálogo definitivo.
 const MODELOS_CATALOGO = {
-    rock: { bloque: 'izquierda', fila: 25 },
-    viena: { bloque: 'izquierda', fila: 31 },
-    diamond: { bloque: 'derecha', fila: 19 },
+    'bamboe no vuelta aloe': {
+        bloque: 'izquierda',
+        fila: 19,
+    },
+
+    'aloe vera natura': {
+        bloque: 'izquierda',
+        fila: 22,
+    },
+
+    rock: {
+        bloque: 'izquierda',
+        fila: 25,
+    },
+
+    aniversario: {
+        bloque: 'izquierda',
+        fila: 28,
+    },
+
+    viena: {
+        bloque: 'izquierda',
+        fila: 31,
+    },
+
+    hotelero: {
+        bloque: 'izquierda',
+        fila: 34,
+    },
+
+    diamond: {
+        bloque: 'derecha',
+        fila: 19,
+    },
 }
 
 // Espacios reservados para modelos manuales.

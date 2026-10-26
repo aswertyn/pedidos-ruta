@@ -61,7 +61,9 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
     previousCount.current = items.length
   }, [items.length])
 
-  const [productNumber, setProductNumber] = useState(initialItem?.productNumber ?? '')
+  const [selectedModel, setSelectedModel] = useState(
+    initialItem?.isManual ? '' : initialItem?.model ?? ''
+  )
   const [manualModel, setManualModel] = useState(initialItem?.isManual ? initialItem.model : '')
   const [isManual, setIsManual] = useState(Boolean(initialItem?.isManual))
 
@@ -76,7 +78,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
   const [submitted, setSubmitted] = useState(false)
 
   const selectedProduct = products.find(
-    (product) => product.productNumber === productNumber,
+    (product) => product.model === selectedModel,
   )
 
   const availableTypes = isManual
@@ -113,14 +115,14 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
 
   const enableManualMode = () => {
     setIsManual(true)
-    setProductNumber('')
+    setSelectedModel('')
     setManualModel('')
     resetProductConfiguration()
   }
 
   const enableCatalogMode = () => {
     setIsManual(false)
-    setProductNumber('')
+    setSelectedModel('')
     setManualModel('')
     resetProductConfiguration()
   }
@@ -161,9 +163,6 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
     }
 
     const item: OrderItem = {
-      productNumber: isManual
-        ? ''
-        : selectedProduct!.productNumber,
       model,
       productType,
       bedSize,
@@ -175,7 +174,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
     onAddItem(item)
     setSubmitted(false)
 
-    setProductNumber('')
+    setSelectedModel('')
     setManualModel('')
     setProductType('')
     setBedSize('')
@@ -192,189 +191,187 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
       </p>
 
       <form className="item-entry-form" noValidate onSubmit={(event) => { event.preventDefault(); handleSubmit() }}>
-      {!isManual ? (
-        <>
-          <label className="form-label">
-            Modelo
+        {!isManual ? (
+          <>
+            <label className="form-label">
+              Modelo
 
-            <select
-              className="form-control"
-              aria-invalid={submitted && !!errors.model}
-              value={productNumber}
-              onChange={(event) => {
-                setProductNumber(event.target.value)
-                resetProductConfiguration()
-              }}
-            >
-              <option value="">
-                Seleccione un modelo
-              </option>
-
-              {products.map((product) => (
-                <option
-                  key={product.productNumber}
-                  value={product.productNumber}
-                >
-                  {product.productNumber} - {product.model}
+              <select
+                className="form-control"
+                aria-invalid={submitted && !!errors.model}
+                value={selectedModel}
+                onChange={(event) => {
+                  setSelectedModel(event.target.value)
+                  resetProductConfiguration()
+                }}
+              >
+                <option value="">
+                  Seleccione un modelo
                 </option>
-              ))}
-            </select>
-          </label>
 
-          <button
-            className="manual-model-button"
-            type="button"
-            onClick={enableManualMode}
-          >
-            + Capturar modelo manualmente
-          </button>
-        </>
-      ) : (
-        <>
-          <label className="form-label">
-            Modelo
+                {products.map((product) => (
+                  <option
+                    key={product.model}
+                    value={product.model}
+                  >
+                    {product.model}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-            <input
-              className="form-control"
-              type="text"
-              maxLength={150}
-              aria-invalid={submitted && !!errors.model}
-              value={manualModel}
-              placeholder="Escribe el modelo"
-              onChange={(event) => {
-                setManualModel(event.target.value)
-              }}
-            />
-          </label>
+            <button
+              className="manual-model-button"
+              type="button"
+              onClick={enableManualMode}
+            >
+              + Capturar modelo manualmente
+            </button>
+          </>
+        ) : (
+          <>
+            <label className="form-label">
+              Modelo
 
-          <button
-            className="manual-model-button"
-            type="button"
-            onClick={enableCatalogMode}
-          >
-            ← Seleccionar del catálogo
-          </button>
-        </>
-      )}
-      {(canConfigureProduct || isManual) && (
-        <div className="product-options">
-          <div className="option-group">
-            <span className="option-title">
-              Tipo
-            </span>
+              <input
+                className="form-control"
+                type="text"
+                maxLength={150}
+                aria-invalid={submitted && !!errors.model}
+                value={manualModel}
+                placeholder="Escribe el modelo"
+                onChange={(event) => {
+                  setManualModel(event.target.value)
+                }}
+              />
+            </label>
 
-            <div className="option-buttons">
-              {availableTypes.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  className={`option-button ${
-                    productType === type ? 'selected' : ''
-                  }`}
-                  onClick={() => setProductType(type)}
-                >
-                  {type === 'mattress'
-                    ? 'Colchón'
-                    : type === 'box'
-                      ? 'Box'
-                      : 'Tarima'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="option-group">
-            <span className="option-title">
-              Tamaño
-            </span>
-
-            <div className="option-buttons size-buttons">
-              {availableSizes.map((size) => (
-                <button
-                  key={size}
-                  type="button"
-                  className={`option-button ${
-                    bedSize === size ? 'selected' : ''
-                  }`}
-                  onClick={() => setBedSize(size)}
-                >
-                  {size === 'ind'
-                    ? 'Individual'
-                    : size === 'mat'
-                      ? 'Matrimonial'
-                      : size === 'Q.S.'
-                        ? 'Queen Size'
-                        : 'King Size'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="quantity-price-grid">
+            <button
+              className="manual-model-button"
+              type="button"
+              onClick={enableCatalogMode}
+            >
+              ← Seleccionar del catálogo
+            </button>
+          </>
+        )}
+        {(canConfigureProduct || isManual) && (
+          <div className="product-options">
             <div className="option-group">
               <span className="option-title">
-                Cantidad
+                Tipo
               </span>
 
-              <div className="quantity-control">
-                <button
-                  type="button"
-                  onClick={decreaseQuantity}
-                  aria-label="Disminuir cantidad"
-                >
-                  −
-                </button>
-
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  inputMode="numeric"
-                  value={quantity}
-                  aria-label="Cantidad"
-                  aria-invalid={submitted && !!errors.quantity}
-                  max="9999"
-                  onChange={(event) => setQuantity(event.target.value)}
-                />
-
-                <button
-                  type="button"
-                  onClick={increaseQuantity}
-                  aria-label="Aumentar cantidad"
-                >
-                  +
-                </button>
+              <div className="option-buttons">
+                {availableTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`option-button ${productType === type ? 'selected' : ''
+                      }`}
+                    onClick={() => setProductType(type)}
+                  >
+                    {type === 'mattress'
+                      ? 'Colchón'
+                      : type === 'box'
+                        ? 'Box'
+                        : 'Tarima'}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <label className="form-label price-field">
-              Precio
+            <div className="option-group">
+              <span className="option-title">
+                Tamaño
+              </span>
 
-              <div className="price-input">
-                <span>$</span>
-
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={price}
-                  aria-label="Precio unitario"
-                  aria-invalid={submitted && !!errors.price}
-                  max="999999.99"
-                  onChange={(event) => setPrice(event.target.value)}
-                />
+              <div className="option-buttons size-buttons">
+                {availableSizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    className={`option-button ${bedSize === size ? 'selected' : ''
+                      }`}
+                    onClick={() => setBedSize(size)}
+                  >
+                    {size === 'ind'
+                      ? 'Individual'
+                      : size === 'mat'
+                        ? 'Matrimonial'
+                        : size === 'Q.S.'
+                          ? 'Queen Size'
+                          : 'King Size'}
+                  </button>
+                ))}
               </div>
-            </label>
+            </div>
+            <div className="quantity-price-grid">
+              <div className="option-group">
+                <span className="option-title">
+                  Cantidad
+                </span>
+
+                <div className="quantity-control">
+                  <button
+                    type="button"
+                    onClick={decreaseQuantity}
+                    aria-label="Disminuir cantidad"
+                  >
+                    −
+                  </button>
+
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    inputMode="numeric"
+                    value={quantity}
+                    aria-label="Cantidad"
+                    aria-invalid={submitted && !!errors.quantity}
+                    max="9999"
+                    onChange={(event) => setQuantity(event.target.value)}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={increaseQuantity}
+                    aria-label="Aumentar cantidad"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <label className="form-label price-field">
+                Precio
+
+                <div className="price-input">
+                  <span>$</span>
+
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={price}
+                    aria-label="Precio unitario"
+                    aria-invalid={submitted && !!errors.price}
+                    max="999999.99"
+                    onChange={(event) => setPrice(event.target.value)}
+                  />
+                </div>
+              </label>
+            </div>
           </div>
+        )}
+        <div className="validation-message" role="alert" aria-live="polite">
+          {submitted ? Object.values(errors).find(Boolean) : ''}
         </div>
-      )}
-      <div className="validation-message" role="alert" aria-live="polite">
-        {submitted ? Object.values(errors).find(Boolean) : ''}
-      </div>
-      <button className="primary-button add-product-button" type="submit">
-        {initialItem ? 'Guardar cambios' : '+ Agregar producto'}
-      </button>
+        <button className="primary-button add-product-button" type="submit">
+          {initialItem ? 'Guardar cambios' : '+ Agregar producto'}
+        </button>
       </form>
       {items.length > 0 && (
         <details className="items-accordion" ref={detailsRef}>
@@ -428,7 +425,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
             initialItem={items[editingIndex]}
             items={[]}
             onAddItem={(item) => { onUpdateItem?.(editingIndex, item); setEditingIndex(null) }}
-            onRemoveItem={() => {}}
+            onRemoveItem={() => { }}
           />
           <button type="button" className="secondary-button modal-cancel" onClick={() => setEditingIndex(null)}>Cancelar</button>
         </dialog>

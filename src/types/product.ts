@@ -7,7 +7,7 @@ export type BedSize =
   | 'K.S.'
 
 export interface Product {
-  productNumber: string
+ // productNumber: string
   model: string
   availableTypes: ProductType[]
   availableSizes: BedSize[]

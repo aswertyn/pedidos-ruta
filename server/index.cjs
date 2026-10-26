@@ -7,6 +7,8 @@ const { solicitarCodigoOTP,
 const SqlSessionStore = require('./sqlSessionStore.cjs')
 const { iniciarLimpiezaSesiones } = require('./sessionCleanup.cjs')
 const multer = require('multer')
+const { adaptarPedido } = require('./excel/adaptarPedido.cjs')
+const { generarPedido } = require('./excel/generarPedido.cjs')
 
 require('dotenv').config({
     path: require('node:path').join(__dirname, '..', '.env'),
@@ -627,6 +629,65 @@ app.get('/api/hojas-ruta/:id/foto', async (req, res) => {
     }
 })
 
+
+app.post('/api/pedidos/exportar-excel', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({
+            message: 'Debes iniciar sesión para generar el Excel',
+        })
+    }
+
+    try {
+        const { order, customer, consignee } = req.body ?? {}
+
+        if (!order || !customer) {
+            return res.status(400).json({
+                message: 'Faltan datos del pedido o del cliente',
+            })
+        }
+
+        if (
+            order.manualConsignee === null &&
+            !consignee
+        ) {
+            return res.status(400).json({
+                message: 'Faltan los datos del consignado',
+            })
+        }
+
+        const pedidoAdaptado = adaptarPedido(
+            order,
+            customer,
+            consignee
+        )
+
+        const archivo = await generarPedido(pedidoAdaptado)
+
+        const nombreArchivo = `pedido_${String(order.folio).replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`
+
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename="${nombreArchivo}"`
+        )
+
+        res.setHeader('Cache-Control', 'private, no-store')
+        res.setHeader('X-Content-Type-Options', 'nosniff')
+
+        return res.send(Buffer.from(archivo))
+
+    } catch (error) {
+        console.error('Error al generar Excel:', error)
+
+        return res.status(500).json({
+            message: 'No fue posible generar el archivo Excel',
+        })
+    }
+})
 
 app.listen(PORT, () => {
     console.log(`API ejecutándose en http://localhost:${PORT}`)

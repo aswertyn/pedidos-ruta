@@ -13,6 +13,7 @@ import PhotoGallery from './components/PhotoGallery'
 import LoginPage from './pages/LoginPage'
 import type { AuthUser } from './services/authService'
 import { getCurrentUser, logout } from './services/authService'
+import { descargarExcel } from './services/excelService'
 
 import { agents } from './data/agents'
 import { customers } from './data/customers'
@@ -82,6 +83,7 @@ function App() {
 
   const [observations, setObservations] = useState('')
   const [polyethyleneBags, setPolyethyleneBags] = useState<PolyethyleneBag[]>([])
+  const [generandoExcel, setGenerandoExcel] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -273,6 +275,30 @@ function App() {
     if (currentStep === 'review') goToStep('details')
   }
 
+  const handleDescargarExcel = async () => {
+    if (!order || !selectedCustomer || generandoExcel) return
+
+    try {
+      setGenerandoExcel(true)
+
+      await descargarExcel({
+        order,
+        customer: selectedCustomer,
+        consignee: selectedConsignee,
+      })
+    } catch (error) {
+      console.error('Error al descargar Excel:', error)
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible generar el Excel'
+      )
+    } finally {
+      setGenerandoExcel(false)
+    }
+  }
+
   const handleNext = () => {
     if (!showNextButton || folio.trim() === '') return
 
@@ -283,13 +309,15 @@ function App() {
     if (currentStep === 'details') goToStep('review')
 
     if (currentStep === 'review') {
-      // Aquí va el envío del pedido.
+      void handleDescargarExcel()
     }
   }
 
   const getNextButtonText = () => {
     if (currentStep === 'details') return 'Revisar pedido'
-    if (currentStep === 'review') return 'Enviar pedido'
+    if (currentStep === 'review') {
+      return generandoExcel ? 'Generando Excel...' : 'Descargar Excel'
+    }
 
     return 'Continuar'
   }
@@ -585,7 +613,7 @@ function App() {
             className="primary-button navigation-next"
             type="button"
             onClick={handleNext}
-            disabled={!showNextButton}
+            disabled={!showNextButton || generandoExcel}
             tabIndex={showNextButton ? 0 : -1}
             aria-hidden={!showNextButton}
           >
