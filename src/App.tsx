@@ -267,6 +267,30 @@ function App() {
     (currentStep === 'details' && orderDate !== '') ||
     currentStep === 'review'
 
+  const handleReturnToCaptureMethods = () => {
+    const hasOrderData =
+      folio.trim() !== '' ||
+      selectedAgent !== null ||
+      selectedCustomer !== null ||
+      selectedConsignee !== null ||
+      manualConsignee !== null ||
+      orderItems.length > 0 ||
+      polyethyleneBags.length > 0 ||
+      orderDate !== '' ||
+      purchaseOrder.trim() !== '' ||
+      observations.trim() !== ''
+
+    if (hasOrderData) {
+      const confirmed = window.confirm(
+        '¿Deseas volver a los métodos de captura? Los datos del pedido se conservarán mientras permanezcas en esta sesión de la página.'
+      )
+
+      if (!confirmed) return
+    }
+
+    setCaptureMode(null)
+  }
+
   const handleBack = () => {
     if (currentStep === 'customer') goToStep('agent')
     if (currentStep === 'delivery') goToStep('customer')
@@ -464,13 +488,23 @@ function App() {
           <div className="header-top">
             <h1>Levantamiento de pedidos</h1>
 
-            <button
-              type="button"
-              className="logout-button"
-              onClick={handleLogout}
-            >
-              Salir
-            </button>
+            <div className="header-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={handleReturnToCaptureMethods}
+              >
+                Regresar
+              </button>
+
+              <button
+                type="button"
+                className="logout-button"
+                onClick={handleLogout}
+              >
+                Salir
+              </button>
+            </div>
           </div>
 
           <p>Aplicación para captura de pedidos en ruta.</p>
