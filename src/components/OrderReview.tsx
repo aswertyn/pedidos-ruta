@@ -195,16 +195,10 @@ function OrderReview({
           {order.items.map((item, index) => (
             <article
               className="review-product"
-              key={`${item.productNumber}-${index}`}
+              key={`${item.model}-${index}`}
             >
               <div className="review-product-header">
                 <div>
-                  {!item.isManual && (
-                    <span className="order-item-number">
-                      {item.productNumber}
-                    </span>
-                  )}
-
                   <strong>{item.model}</strong>
                 </div>
 

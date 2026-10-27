@@ -35,6 +35,22 @@ const manualBedSizes: BedSize[] = [
   'K.S.',
 ]
 
+function normalizarModelo(modelo: string) {
+  return modelo
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+}
+
+function sonProductosIguales(a: OrderItem, b: OrderItem) {
+  return (
+    normalizarModelo(a.model) === normalizarModelo(b.model) &&
+    a.productType === b.productType &&
+    a.bedSize === b.bedSize
+  )
+}
+
 function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateItem }: OrderItemFormProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null)
   const previousCount = useRef(0)
@@ -76,6 +92,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
   const [quantity, setQuantity] = useState(String(initialItem?.quantity ?? 1))
   const [price, setPrice] = useState(initialItem ? String(initialItem.price) : '')
   const [submitted, setSubmitted] = useState(false)
+  const [duplicateError, setDuplicateError] = useState('')
 
   const selectedProduct = products.find(
     (product) => product.model === selectedModel,
@@ -157,6 +174,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
       ? manualModel.trim()
       : selectedProduct?.model ?? ''
 
+    setDuplicateError('')
     setSubmitted(true)
     if (Object.values(errors).some(Boolean) || !productType || !bedSize) {
       return
@@ -171,6 +189,18 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
       isManual,
     }
 
+    const duplicado = items.some((existente) =>
+      sonProductosIguales(existente, item)
+    )
+
+    if (duplicado) {
+      setDuplicateError(
+        'Este producto ya está agregado con el mismo tipo y tamaño. Modifica su cantidad desde la opción de edición.'
+      )
+      return
+    }
+
+    setDuplicateError('')
     onAddItem(item)
     setSubmitted(false)
 
@@ -367,7 +397,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
           </div>
         )}
         <div className="validation-message" role="alert" aria-live="polite">
-          {submitted ? Object.values(errors).find(Boolean) : ''}
+          {duplicateError || (submitted ? Object.values(errors).find(Boolean) : '')}
         </div>
         <button className="primary-button add-product-button" type="submit">
           {initialItem ? 'Guardar cambios' : '+ Agregar producto'}
@@ -423,7 +453,7 @@ function OrderItemForm({ items, onAddItem, onRemoveItem, initialItem, onUpdateIt
         <dialog ref={dialogRef} className="product-edit-dialog" aria-label="Editar producto" onCancel={() => setEditingIndex(null)} onClose={() => setEditingIndex(null)}>
           <OrderItemForm
             initialItem={items[editingIndex]}
-            items={[]}
+            items={items.filter((_, index) => index !== editingIndex)}
             onAddItem={(item) => { onUpdateItem?.(editingIndex, item); setEditingIndex(null) }}
             onRemoveItem={() => { }}
           />

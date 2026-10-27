@@ -4,6 +4,7 @@ import type { PolyethyleneBag } from '../types/polyethyleneBag'
 
 interface PolyethyleneBagFormProps {
     initialBag?: PolyethyleneBag
+    editingBagIndex?: number
     onUpdateBag?: (index: number, bag: PolyethyleneBag) => void
     bags: PolyethyleneBag[]
     onAddBag: (bag: PolyethyleneBag) => void
@@ -17,6 +18,7 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
 
 function PolyethyleneBagForm({
     initialBag,
+    editingBagIndex,
     onUpdateBag,
     bags,
     onAddBag,
@@ -52,9 +54,19 @@ function PolyethyleneBagForm({
     const [quantity, setQuantity] = useState(String(initialBag?.quantity ?? 1))
     const [price, setPrice] = useState(initialBag ? String(initialBag.price) : '')
     const [submitted, setSubmitted] = useState(false)
+
+    const isDuplicate = bags.some(
+        (bag, index) =>
+            bag.key === key &&
+            index !== editingBagIndex
+    )
+
     const errors = {
         key: !['PCEM-I', 'PCEM-M', 'PCEM-Q', 'PCEM-K'].includes(key)
-            ? 'Selecciona una clave de bolsa válida.' : '',
+            ? 'Selecciona una clave de bolsa válida.'
+            : isDuplicate
+                ? 'Esta bolsa ya fue agregada. Puedes editar su cantidad y precio.'
+                : '',
         quantity: !/^\d+$/.test(quantity) || !Number.isSafeInteger(Number(quantity)) || Number(quantity) < 1 || Number(quantity) > 9999
             ? 'Ingresa una cantidad entera entre 1 y 9999.' : '',
         price: !/^\d+(\.\d{1,2})?$/.test(price) || !Number.isFinite(Number(price)) || Number(price) < 0.01 || Number(price) > 999999.99
@@ -241,7 +253,8 @@ function PolyethyleneBagForm({
                 <dialog ref={dialogRef} className="product-edit-dialog" aria-label="Editar bolsa" onCancel={() => setEditingIndex(null)} onClose={() => setEditingIndex(null)}>
                     <PolyethyleneBagForm
                         initialBag={bags[editingIndex]}
-                        bags={[]}
+                        editingBagIndex={editingIndex}
+                        bags={bags}
                         onAddBag={(bag) => { onUpdateBag?.(editingIndex, bag); setEditingIndex(null) }}
                         onRemoveBag={() => {}}
                     />
