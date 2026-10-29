@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { FaCamera, FaPencilAlt } from 'react-icons/fa'
+import { GrGallery } from 'react-icons/gr'
 
 import AgentSelector from './components/AgentSelector'
 import CustomerSelector from './components/CustomerSelector'
@@ -382,25 +384,53 @@ function App() {
             <div className="capture-options">
               <button
                 type="button"
-                className="primary-button"
+                className="capture-card"
                 onClick={() => setCaptureMode('manual')}
               >
-                Captura manual
+                <span className="capture-card-icon" aria-hidden="true"><FaPencilAlt /></span>
+
+                <span className="capture-card-content">
+                  <strong>Captura manual</strong>
+                  <span>
+                    Registra un pedido completando el formulario paso a paso.
+                  </span>
+                </span>
+
+                <span className="capture-card-arrow" aria-hidden="true">›</span>
               </button>
 
               <button
                 type="button"
-                className="secondary-button"
+                className="capture-card"
                 onClick={() => setCaptureMode('photo')}
               >
-                Captura por fotografía
+                <span className="capture-card-icon" aria-hidden="true"><FaCamera /></span>
+
+                <span className="capture-card-content">
+                  <strong>Captura por fotografía</strong>
+                  <span>
+                    Toma o selecciona una fotografía de una nota de pedido.
+                  </span>
+                </span>
+
+                <span className="capture-card-arrow" aria-hidden="true">›</span>
               </button>
+
               <button
                 type="button"
-                className="secondary-button"
+                className="capture-card"
                 onClick={() => setCaptureMode('gallery')}
               >
-                Ver fotografías registradas
+                <span className="capture-card-icon" aria-hidden="true"><GrGallery /></span>
+
+                <span className="capture-card-content">
+                  <strong>Fotografías registradas</strong>
+                  <span>
+                    Consulta las fotografías de pedidos que has guardado.
+                  </span>
+                </span>
+
+                <span className="capture-card-arrow" aria-hidden="true">›</span>
               </button>
             </div>
           </section>
@@ -417,13 +447,23 @@ function App() {
             <div className="header-top">
               <h1>Fotografías registradas</h1>
 
-              <button
-                type="button"
-                className="logout-button"
-                onClick={handleLogout}
-              >
-                Salir
-              </button>
+              <div className="header-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setCaptureMode(null)}
+                >
+                  Regresar
+                </button>
+
+                <button
+                  type="button"
+                  className="logout-button"
+                  onClick={handleLogout}
+                >
+                  Salir
+                </button>
+              </div>
             </div>
 
             <p>Consulta las fotografías que has registrado.</p>
@@ -432,14 +472,6 @@ function App() {
 
         <div className="app-content">
           <PhotoGallery />
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => setCaptureMode(null)}
-          >
-            Volver a métodos de captura
-          </button>
         </div>
       </main>
     )
@@ -453,13 +485,23 @@ function App() {
             <div className="header-top">
               <h1>Captura por fotografía</h1>
 
-              <button
-                type="button"
-                className="logout-button"
-                onClick={handleLogout}
-              >
-                Salir
-              </button>
+              <div className="header-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setCaptureMode(null)}
+                >
+                  Regresar
+                </button>
+
+                <button
+                  type="button"
+                  className="logout-button"
+                  onClick={handleLogout}
+                >
+                  Salir
+                </button>
+              </div>
             </div>
 
             <p>Registra una nota de pedido mediante una fotografía.</p>
@@ -468,14 +510,6 @@ function App() {
 
         <div className="app-content">
           <PhotoCapture />
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => setCaptureMode(null)}
-          >
-            Volver a métodos de captura
-          </button>
         </div>
       </main>
     )
