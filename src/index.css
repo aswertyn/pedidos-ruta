@@ -2525,3 +2525,31 @@ input[type='date'].form-control {
         animation: none;
     }
 }
+
+/* Validaciones del formulario */
+
+.form-control[aria-invalid='true'] {
+  border-color: #b42318;
+}
+
+.form-control[aria-invalid='true']:focus {
+  border-color: #b42318;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+.manual-address-form input[aria-invalid='true'] {
+  border-color: #b42318;
+}
+
+.manual-address-form input[aria-invalid='true']:focus {
+  border-color: #b42318;
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.12);
+}
+
+.field-error {
+  display: block;
+  color: #b42318;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}

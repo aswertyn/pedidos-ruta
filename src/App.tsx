@@ -78,6 +78,7 @@ function App() {
   const [deliveryPriority, setDeliveryPriority] = useState<DeliveryPriority>('scheduled')
   const [purchaseOrder, setPurchaseOrder] = useState('')
   const [folio, setFolio] = useState('')
+  const [attemptedContinue, setAttemptedContinue] = useState(false)
   const [conditions, setConditions] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
   const [consigneeName, setConsigneeName] = useState('')
@@ -132,6 +133,7 @@ function App() {
   }
 
   const goToStep = (step: OrderStep) => {
+    setAttemptedContinue(false)
     setCurrentStep(step)
   }
 
@@ -211,11 +213,14 @@ function App() {
 
   const hasValidManualConsignee =
     manualConsignee !== null &&
-    manualConsignee.address.trim() !== '' &&
-    manualConsignee.city.trim() !== '' &&
+    consigneeName.trim().length >= 2 &&
+    /^[\p{L}][\p{L}\s'-]*$/u.test(consigneeName.trim()) &&
+    /^\d{10}$/.test(consigneePhone) &&
+    manualConsignee.address.trim().length >= 10 &&
+    manualConsignee.city.trim().length >= 3 &&
     manualConsignee.receivingStartTime.trim() !== '' &&
-    manualConsignee?.receivingEndTime.trim() !== '' &&
-    manualConsignee?.receivingEndTime >
+    manualConsignee.receivingEndTime.trim() !== '' &&
+    manualConsignee.receivingEndTime >
     manualConsignee.receivingStartTime
 
   const hasDeliveryDestination =
@@ -262,7 +267,7 @@ function App() {
   const showBackButton = currentStep !== 'agent'
 
   const showNextButton =
-    (currentStep === 'agent' && selectedAgent !== null && folio.trim() !== '') ||
+    (currentStep === 'agent' && selectedAgent !== null && /^\d+$/.test(folio)) ||
     (currentStep === 'customer' && selectedCustomer !== null) ||
     (currentStep === 'delivery' && hasDeliveryDestination) ||
     (currentStep === 'products' && orderItems.length > 0) ||
@@ -326,11 +331,31 @@ function App() {
   }
 
   const handleNext = () => {
-    if (!showNextButton || folio.trim() === '') return
+    if (currentStep === 'agent') {
+      setAttemptedContinue(true)
 
-    if (currentStep === 'agent') goToStep('customer')
+      if (!selectedAgent || !/^\d+$/.test(folio)) {
+        return
+      }
+
+      goToStep('customer')
+      return
+    }
+
+    if (currentStep === 'delivery') {
+      setAttemptedContinue(true)
+
+      if (!hasDeliveryDestination) {
+        return
+      }
+
+      goToStep('products')
+      return
+    }
+
+    if (!showNextButton) return
+
     if (currentStep === 'customer') goToStep('delivery')
-    if (currentStep === 'delivery') goToStep('products')
     if (currentStep === 'products') goToStep('details')
     if (currentStep === 'details') goToStep('review')
 
@@ -552,17 +577,32 @@ function App() {
           <section>
             <label className="form-label folio-field">
               Folio (ingreso manual)
+
               <input
                 className="form-control"
                 type="text"
+                inputMode="numeric"
                 maxLength={50}
                 value={folio}
                 required
-                aria-describedby="folio-help"
-                onChange={(event) => setFolio(event.target.value)}
+                aria-invalid={attemptedContinue && !/^\d+$/.test(folio)}
+                aria-describedby={
+                  attemptedContinue && !/^\d+$/.test(folio)
+                    ? 'folio-help'
+                    : undefined
+                }
+                onChange={(event) => {
+                  const value = event.target.value.replace(/\D/g, '')
+                  setFolio(value)
+                }}
                 placeholder="Folio (ingreso manual)"
               />
-              <small id="folio-help">El folio es obligatorio para continuar.</small>
+
+              {attemptedContinue && !/^\d+$/.test(folio) && (
+                <small id="folio-help" className="field-error" role="alert">
+                  El folio es obligatorio para continuar.
+                </small>
+              )}
             </label>
 
             <AgentSelector
@@ -591,6 +631,7 @@ function App() {
               onConsigneeNameChange={setConsigneeName}
               consigneePhone={consigneePhone}
               onConsigneePhoneChange={setConsigneePhone}
+              showValidationErrors={attemptedContinue}
 
               key={selectedCustomer?.customerNumber}
               consignees={customerConsignees}
@@ -681,9 +722,11 @@ function App() {
             className="primary-button navigation-next"
             type="button"
             onClick={handleNext}
-            disabled={!showNextButton || generandoExcel}
-            tabIndex={showNextButton ? 0 : -1}
-            aria-hidden={!showNextButton}
+            disabled={generandoExcel}
+
+          // disabled={!showNextButton || generandoExcel}
+          // tabIndex={showNextButton ? 0 : -1}
+          // aria-hidden={!showNextButton}
           >
             {getNextButtonText()}
           </button>

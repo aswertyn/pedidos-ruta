@@ -95,10 +95,12 @@ function OrderDetailsForm({
         <input
           className="form-control"
           type="text"
+          inputMode="numeric"
           value={purchaseOrder}
-          onChange={(event) =>
-            onPurchaseOrderChange(event.target.value)
-          }
+          onChange={(event) => {
+            const value = event.target.value.replace(/\D/g, '')
+            onPurchaseOrderChange(value)
+          }}
           placeholder="Opcional"
         />
       </label>

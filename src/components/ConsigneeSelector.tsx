@@ -8,6 +8,7 @@ interface ConsigneeSelectorProps {
   onConsigneeNameChange: (value: string) => void
   consigneePhone: string
   onConsigneePhoneChange: (value: string) => void
+  showValidationErrors: boolean
 
   consignees: Consignee[]
   selectedConsignee: Consignee | null
@@ -21,6 +22,7 @@ function ConsigneeSelector({
   onConsigneeNameChange,
   consigneePhone,
   onConsigneePhoneChange,
+  showValidationErrors,
 
   consignees,
   selectedConsignee,
@@ -49,6 +51,18 @@ function ConsigneeSelector({
       })
     }
   }
+
+  const isNameValid =
+    consigneeName.trim().length >= 2 &&
+    /^[\p{L}][\p{L}\s'-]*$/u.test(consigneeName.trim())
+
+  const isPhoneValid = /^\d{10}$/.test(consigneePhone)
+
+  const isAddressValid =
+    (manualConsignee?.address.trim().length ?? 0) >= 10
+
+  const isCityValid =
+    (manualConsignee?.city.trim().length ?? 0) >= 3
 
   return (
     <section className="consignee-selector">
@@ -146,29 +160,54 @@ function ConsigneeSelector({
         <div className="manual-address-form">
           <h3>Dirección de entrega</h3>
 
-      <label className="form-label">
-        Nombre del consignado
-        <input
-          className="form-control"
-          type="text"
-          maxLength={150}
-          value={consigneeName}
-          onChange={(event) => onConsigneeNameChange(event.target.value)}
-          placeholder="Nombre del consignado"
-        />
-      </label>
+          <label className="form-label">
+            Nombre del consignado
+            <input
+              className="form-control"
+              type="text"
+              maxLength={100}
+              minLength={2}
+              required
+              value={consigneeName}
+              aria-invalid={showValidationErrors && !isNameValid}
+              onChange={(event) => {
+                const value = event.target.value
 
-      <label className="form-label">
-        Teléfono del consignado
-        <input
-          className="form-control"
-          type="tel"
-          maxLength={30}
-          value={consigneePhone}
-          onChange={(event) => onConsigneePhoneChange(event.target.value)}
-          placeholder="Teléfono del consignado"
-        />
-      </label>
+                if (/^[\p{L}\s'-]*$/u.test(value)) {
+                  onConsigneeNameChange(value)
+                }
+              }}
+              placeholder="Nombre del consignado"
+            />
+            {showValidationErrors && !isNameValid && (
+              <small className="field-error" role="alert">
+                El nombre debe contener al menos 2 caracteres válidos.
+              </small>
+            )}
+          </label>
+
+          <label className="form-label">
+            Teléfono del consignado
+            <input
+              className="form-control"
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              required
+              value={consigneePhone}
+              aria-invalid={showValidationErrors && !isPhoneValid}
+              onChange={(event) => {
+                const value = event.target.value.replace(/\D/g, '')
+                onConsigneePhoneChange(value)
+              }}
+              placeholder="Teléfono a 10 dígitos"
+            />
+            {showValidationErrors && !isPhoneValid && (
+              <small className="field-error" role="alert">
+                El teléfono debe contener exactamente 10 dígitos.
+              </small>
+            )}
+          </label>
 
 
 
@@ -176,38 +215,64 @@ function ConsigneeSelector({
             Dirección
             <input
               type="text"
+              minLength={10}
+              maxLength={200}
+              required
+              aria-invalid={showValidationErrors && !isAddressValid}
               placeholder="Ingresa la dirección"
               value={manualConsignee?.address ?? ''}
-              onChange={(event) =>
-                onManualConsigneeChange({
-                  address: event.target.value,
-                  city: manualConsignee?.city ?? '',
-                  receivingStartTime:
-                    manualConsignee?.receivingStartTime ?? '',
-                  receivingEndTime:
-                    manualConsignee?.receivingEndTime ?? '',
-                })
-              }
+              onChange={(event) => {
+                const value = event.target.value
+
+                if (/^[\p{L}\p{N}\s,.#-]*$/u.test(value)) {
+                  onManualConsigneeChange({
+                    address: value,
+                    city: manualConsignee?.city ?? '',
+                    receivingStartTime:
+                      manualConsignee?.receivingStartTime ?? '',
+                    receivingEndTime:
+                      manualConsignee?.receivingEndTime ?? '',
+                  })
+                }
+              }}
             />
+            {showValidationErrors && !isAddressValid && (
+              <small className="field-error" role="alert">
+                La dirección debe contener al menos 10 caracteres.
+              </small>
+            )}
           </label>
 
           <label>
             Población
             <input
               type="text"
+              minLength={3}
+              maxLength={100}
+              required
+              aria-invalid={showValidationErrors && !isCityValid}
               placeholder="Ingresa la población"
               value={manualConsignee?.city ?? ''}
-              onChange={(event) =>
-                onManualConsigneeChange({
-                  address: manualConsignee?.address ?? '',
-                  city: event.target.value,
-                  receivingStartTime:
-                    manualConsignee?.receivingStartTime ?? '',
-                  receivingEndTime:
-                    manualConsignee?.receivingEndTime ?? '',
-                })
-              }
+              onChange={(event) => {
+                const value = event.target.value
+
+                if (/^[\p{L}\s]*$/u.test(value)) {
+                  onManualConsigneeChange({
+                    address: manualConsignee?.address ?? '',
+                    city: value,
+                    receivingStartTime:
+                      manualConsignee?.receivingStartTime ?? '',
+                    receivingEndTime:
+                      manualConsignee?.receivingEndTime ?? '',
+                  })
+                }
+              }}
             />
+            {showValidationErrors && !isCityValid && (
+              <small className="field-error" role="alert">
+                La población debe contener al menos 3 caracteres.
+              </small>
+            )}
           </label>
 
           <div className="time-range">
