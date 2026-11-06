@@ -1,4 +1,5 @@
 const express = require('express')
+const path = require('node:path')
 const { sql, poolPromise } = require('./database.cjs')
 const session = require('express-session')
 const { consultarEsperaOTP } = require('./otpDatabase.cjs')
@@ -16,7 +17,11 @@ require('dotenv').config({
 
 
 const app = express()
-const PORT = 3001
+const PORT = Number(process.env.PORT || 3001)
+const DIST_PATH = path.join(__dirname, '..', 'dist')
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1)
+}
 const uploadFoto = multer({
     storage: multer.memoryStorage(),
     limits: {
@@ -49,7 +54,7 @@ app.use(
         saveUninitialized: false,
         cookie: {
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 1000 * 60 * 60 * 8,
         },
@@ -687,6 +692,21 @@ app.post('/api/pedidos/exportar-excel', async (req, res) => {
             message: 'No fue posible generar el archivo Excel',
         })
     }
+})
+
+// Servir React compilado
+app.use(express.static(DIST_PATH))
+
+// Evitar que las rutas desconocidas de API devuelvan HTML
+app.use('/api', (req, res) => {
+    res.status(404).json({
+        message: 'Ruta de API no encontrada',
+    })
+})
+
+// Permitir navegación del frontend
+app.get('/{*path}', (req, res) => {
+    res.sendFile(path.join(DIST_PATH, 'index.html'))
 })
 
 app.listen(PORT, () => {
