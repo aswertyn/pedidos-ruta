@@ -660,6 +660,26 @@ app.post('/api/pedidos/exportar-excel', async (req, res) => {
             })
         }
 
+        if (typeof order.folio !== 'string' || !/^\d{1,10}$/.test(order.folio)) {
+            return res.status(400).json({
+                message: 'El folio debe contener entre 1 y 10 dígitos, sin signos ni decimales',
+            })
+        }
+
+        if (typeof order.purchaseOrder !== 'string' || !/^\d{0,10}$/.test(order.purchaseOrder)) {
+            return res.status(400).json({
+                message: 'La orden de compra debe contener hasta 10 dígitos, sin signos ni decimales',
+            })
+        }
+
+        if (typeof order.consigneeName !== 'string' ||
+            !/^[\p{L}][\p{L} ]*$/u.test(order.consigneeName.trim()) ||
+            order.consigneeName.trim().length < 2 || order.consigneeName.length > 100) {
+            return res.status(400).json({
+                message: 'El nombre del consignado debe tener entre 2 y 100 caracteres y contener solo letras y espacios',
+            })
+        }
+
         const pedidoAdaptado = adaptarPedido(
             order,
             customer,

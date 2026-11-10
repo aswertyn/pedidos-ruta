@@ -214,7 +214,7 @@ function App() {
   const hasValidManualConsignee =
     manualConsignee !== null &&
     consigneeName.trim().length >= 2 &&
-    /^[\p{L}][\p{L}\s'-]*$/u.test(consigneeName.trim()) &&
+    /^[\p{L}][\p{L} ]*$/u.test(consigneeName.trim()) &&
     /^\d{10}$/.test(consigneePhone) &&
     manualConsignee.address.trim().length >= 10 &&
     manualConsignee.city.trim().length >= 3 &&
@@ -267,7 +267,7 @@ function App() {
   const showBackButton = currentStep !== 'agent'
 
   const showNextButton =
-    (currentStep === 'agent' && selectedAgent !== null && /^\d+$/.test(folio)) ||
+    (currentStep === 'agent' && selectedAgent !== null && /^\d{1,10}$/.test(folio)) ||
     (currentStep === 'customer' && selectedCustomer !== null) ||
     (currentStep === 'delivery' && hasDeliveryDestination) ||
     (currentStep === 'products' && orderItems.length > 0) ||
@@ -334,7 +334,7 @@ function App() {
     if (currentStep === 'agent') {
       setAttemptedContinue(true)
 
-      if (!selectedAgent || !/^\d+$/.test(folio)) {
+      if (!selectedAgent || !/^\d{1,10}$/.test(folio)) {
         return
       }
 
@@ -582,23 +582,23 @@ function App() {
                 className="form-control"
                 type="text"
                 inputMode="numeric"
-                maxLength={50}
+                maxLength={10}
                 value={folio}
                 required
-                aria-invalid={attemptedContinue && !/^\d+$/.test(folio)}
+                aria-invalid={attemptedContinue && !/^\d{1,10}$/.test(folio)}
                 aria-describedby={
-                  attemptedContinue && !/^\d+$/.test(folio)
+                  attemptedContinue && !/^\d{1,10}$/.test(folio)
                     ? 'folio-help'
                     : undefined
                 }
                 onChange={(event) => {
-                  const value = event.target.value.replace(/\D/g, '')
-                  setFolio(value)
+                  const value = event.target.value
+                  if (/^\d{0,10}$/.test(value)) setFolio(value)
                 }}
                 placeholder="Folio (ingreso manual)"
               />
 
-              {attemptedContinue && !/^\d+$/.test(folio) && (
+              {attemptedContinue && !/^\d{1,10}$/.test(folio) && (
                 <small id="folio-help" className="field-error" role="alert">
                   El folio es obligatorio para continuar.
                 </small>

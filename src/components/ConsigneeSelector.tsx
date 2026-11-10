@@ -54,7 +54,7 @@ function ConsigneeSelector({
 
   const isNameValid =
     consigneeName.trim().length >= 2 &&
-    /^[\p{L}][\p{L}\s'-]*$/u.test(consigneeName.trim())
+    /^[\p{L}][\p{L} ]*$/u.test(consigneeName.trim())
 
   const isPhoneValid = /^\d{10}$/.test(consigneePhone)
 
@@ -173,7 +173,7 @@ function ConsigneeSelector({
               onChange={(event) => {
                 const value = event.target.value
 
-                if (/^[\p{L}\s'-]*$/u.test(value)) {
+                if (/^[\p{L} ]*$/u.test(value)) {
                   onConsigneeNameChange(value)
                 }
               }}

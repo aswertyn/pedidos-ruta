@@ -96,10 +96,11 @@ function OrderDetailsForm({
           className="form-control"
           type="text"
           inputMode="numeric"
+          maxLength={10}
           value={purchaseOrder}
           onChange={(event) => {
-            const value = event.target.value.replace(/\D/g, '')
-            onPurchaseOrderChange(value)
+            const value = event.target.value
+            if (/^\d{0,10}$/.test(value)) onPurchaseOrderChange(value)
           }}
           placeholder="Opcional"
         />
