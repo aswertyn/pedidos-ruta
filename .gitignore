@@ -20,6 +20,9 @@ dist-ssr
 /pruebas-sql
 /pruebas
 
+# Archivos locales de pruebas
+/server/validation/probarValidarPedido.cjs
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

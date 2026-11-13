@@ -5,5 +5,6 @@ export interface Consignee {
   phone: string
   address: string
   city: string
-  receivingHours: string
+receivingStartTime: string
+receivingEndTime: string
 }

@@ -152,7 +152,9 @@ function OrderReview({
 
             <div>
               <span>Horario</span>
-              <strong>{consignee.receivingHours}</strong>
+              <strong>
+                {consignee.receivingStartTime} - {consignee.receivingEndTime}
+              </strong>
             </div>
           </div>
         ) : order.manualConsignee ? (

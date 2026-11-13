@@ -68,7 +68,7 @@ function ConsigneeSelector({
     !!manualConsignee?.receivingStartTime &&
     !!manualConsignee?.receivingEndTime &&
     manualConsignee.receivingEndTime >
-      manualConsignee.receivingStartTime
+    manualConsignee.receivingStartTime
 
   return (
     <section className="consignee-selector">
@@ -113,8 +113,7 @@ function ConsigneeSelector({
                   </span>
 
                   <span className="consignee-hours">
-                    Horario: {consignee.receivingHours}
-                  </span>
+                    Horario: {consignee.receivingStartTime} - {consignee.receivingEndTime}                  </span>
                 </span>
 
                 {isSelected && (

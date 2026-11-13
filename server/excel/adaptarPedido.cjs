@@ -36,7 +36,7 @@ function adaptarPedido(order, datosCliente, datosConsignado) {
     } else {
         direccion = datosConsignado.address
         poblacion = datosConsignado.city
-        horario = datosConsignado.receivingHours
+        horario = `${datosConsignado.receivingStartTime} - ${datosConsignado.receivingEndTime}`
     }
 
     return {
