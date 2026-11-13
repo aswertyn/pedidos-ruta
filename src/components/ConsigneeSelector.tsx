@@ -64,6 +64,12 @@ function ConsigneeSelector({
   const isCityValid =
     (manualConsignee?.city.trim().length ?? 0) >= 3
 
+  const isReceivingHoursValid =
+    !!manualConsignee?.receivingStartTime &&
+    !!manualConsignee?.receivingEndTime &&
+    manualConsignee.receivingEndTime >
+      manualConsignee.receivingStartTime
+
   return (
     <section className="consignee-selector">
       <h2>Lugar de entrega</h2>
@@ -310,6 +316,11 @@ function ConsigneeSelector({
               />
             </label>
           </div>
+          {showValidationErrors && !isReceivingHoursValid && (
+            <small className="field-error" role="alert">
+              El horario de recepción no es válido. La hora final debe ser posterior a la inicial.
+            </small>
+          )}
         </div>
       )}
     </section>

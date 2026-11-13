@@ -16,6 +16,7 @@ import LoginPage from './pages/LoginPage'
 import type { AuthUser } from './services/authService'
 import { getCurrentUser, logout } from './services/authService'
 import { descargarExcel } from './services/excelService'
+import { enviarPedidoN8n } from './services/n8nService'
 
 import { agents } from './data/agents'
 import { customers } from './data/customers'
@@ -87,6 +88,8 @@ function App() {
   const [observations, setObservations] = useState('')
   const [polyethyleneBags, setPolyethyleneBags] = useState<PolyethyleneBag[]>([])
   const [generandoExcel, setGenerandoExcel] = useState(false)
+  const [enviandoPedido, setEnviandoPedido] = useState(false)
+  const [pedidoEnviado, setPedidoEnviado] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -223,6 +226,18 @@ function App() {
     manualConsignee.receivingEndTime >
     manualConsignee.receivingStartTime
 
+  const hasCompleteManualConsignee =
+    manualConsignee !== null &&
+    consigneeName.trim() !== '' &&
+    consigneePhone.trim() !== '' &&
+    manualConsignee.address.trim() !== '' &&
+    manualConsignee.city.trim() !== '' &&
+    manualConsignee.receivingStartTime.trim() !== '' &&
+    manualConsignee.receivingEndTime.trim() !== ''
+
+  const hasCompleteDeliveryDestination =
+    selectedConsignee !== null || hasCompleteManualConsignee
+
   const hasDeliveryDestination =
     selectedConsignee !== null || hasValidManualConsignee
 
@@ -269,7 +284,7 @@ function App() {
   const showNextButton =
     (currentStep === 'agent' && selectedAgent !== null && /^\d{1,10}$/.test(folio)) ||
     (currentStep === 'customer' && selectedCustomer !== null) ||
-    (currentStep === 'delivery' && hasDeliveryDestination) ||
+    (currentStep === 'delivery' && hasCompleteDeliveryDestination) ||
     (currentStep === 'products' && orderItems.length > 0) ||
     (currentStep === 'details' && orderDate !== '') ||
     currentStep === 'review'
@@ -327,6 +342,33 @@ function App() {
       )
     } finally {
       setGenerandoExcel(false)
+    }
+  }
+
+  const handleEnviarPedido = async () => {
+    if (!order || !selectedCustomer || enviandoPedido || pedidoEnviado) return
+
+    try {
+      setEnviandoPedido(true)
+
+      await enviarPedidoN8n({
+        order,
+        customer: selectedCustomer,
+        consignee: selectedConsignee,
+      })
+
+      setPedidoEnviado(true)
+      alert('Pedido recibido por n8n correctamente')
+    } catch (error) {
+      console.error('Error al enviar pedido:', error)
+
+      alert(
+        error instanceof Error
+          ? error.message
+          : 'No fue posible enviar el pedido'
+      )
+    } finally {
+      setEnviandoPedido(false)
     }
   }
 
@@ -694,6 +736,18 @@ function App() {
                 customer={selectedCustomer}
                 consignee={selectedConsignee}
               />
+              <button
+                type="button"
+                className="primary-button"
+                onClick={handleEnviarPedido}
+                disabled={enviandoPedido || pedidoEnviado}
+              >
+                {enviandoPedido
+                  ? 'Enviando...'
+                  : pedidoEnviado
+                    ? 'Pedido enviado'
+                    : 'Enviar pedido (prueba)'}
+              </button>
             </section>
           )}
       </div>
@@ -722,11 +776,7 @@ function App() {
             className="primary-button navigation-next"
             type="button"
             onClick={handleNext}
-            disabled={generandoExcel}
-
-          // disabled={!showNextButton || generandoExcel}
-          // tabIndex={showNextButton ? 0 : -1}
-          // aria-hidden={!showNextButton}
+            disabled={!showNextButton || generandoExcel}
           >
             {getNextButtonText()}
           </button>

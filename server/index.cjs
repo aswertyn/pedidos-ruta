@@ -10,6 +10,8 @@ const { iniciarLimpiezaSesiones } = require('./sessionCleanup.cjs')
 const multer = require('multer')
 const { adaptarPedido } = require('./excel/adaptarPedido.cjs')
 const { generarPedido } = require('./excel/generarPedido.cjs')
+const { enviarPedidoN8n } = require('./integrations/n8n.cjs')
+const { validarPedido } = require('./validation/validarPedido.cjs')
 
 require('dotenv').config({
     path: require('node:path').join(__dirname, '..', '.env'),
@@ -713,6 +715,43 @@ app.post('/api/pedidos/exportar-excel', async (req, res) => {
         })
     }
 })
+
+// Solo para pruebas. Antes de habilitar para usuarios reales, añadir
+// autorización y completar las validaciones críticas del pedido.
+
+app.post('/api/pedidos/enviar', async (req, res) => {
+    // Comprobar que el usuario completó la autenticación
+    if (!req.session?.user) {
+        return res.status(401).json({
+            message: 'Debes iniciar sesión para enviar pedidos'
+        });
+    }
+
+    const errorValidacion = validarPedido(req.body);
+
+    if (errorValidacion) {
+        return res.status(400).json({
+            message: errorValidacion
+        });
+    }
+
+    try {
+        const resultado = await enviarPedidoN8n(req.body);
+
+        return res.json({
+            message: 'Pedido recibido por n8n',
+            resultado
+        });
+
+    } catch (error) {
+        console.error('Error al enviar pedido:', error);
+
+        return res.status(502).json({
+            message: 'No se pudo confirmar la recepción en n8n'
+        });
+    }
+});
+
 
 // Servir React compilado
 app.use(express.static(DIST_PATH))

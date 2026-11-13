@@ -18,6 +18,7 @@ dist-ssr
 # Pruebas locales del backend
 /server/tests/
 /pruebas-sql
+/pruebas
 
 # Editor directories and files
 .vscode/*
