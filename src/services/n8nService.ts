@@ -1,3 +1,4 @@
+
 import type { Order } from '../types/order'
 import type { Customer } from '../types/customer'
 import type { Consignee } from '../types/consignee'
@@ -13,6 +14,28 @@ export async function enviarPedidoN8n({
   customer,
   consignee,
 }: EnviarPedidoRequest): Promise<void> {
+
+  const consigneePayload = order.manualConsignee
+    ? {
+        type: 'manual',
+        consigneeNumber: null,
+        name: order.consigneeName,
+        phone: order.consigneePhone,
+        ...order.manualConsignee,
+      }
+    : consignee
+      ? {
+          ...consignee,
+          type: 'registered',
+        }
+      : null
+
+  const orderPayload = { ...order }
+
+  delete (orderPayload as Partial<Order>).consigneeName
+  delete (orderPayload as Partial<Order>).consigneePhone
+  delete (orderPayload as Partial<Order>).manualConsignee
+
   const response = await fetch('/api/pedidos/enviar', {
     method: 'POST',
     credentials: 'same-origin',
@@ -20,9 +43,9 @@ export async function enviarPedidoN8n({
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      order,
+      order: orderPayload,
       customer,
-      consignee,
+      consignee: consigneePayload,
     }),
   })
 

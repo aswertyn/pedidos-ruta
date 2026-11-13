@@ -4,7 +4,7 @@ export const consignees: Consignee[] = [
   {
     consigneeNumber: '01', //id/número del agente (la fk) 
     customerNumber: '1001', //id/número de cliente (la fk)
-    name: 'Almacen de ejemplo 1',
+    name: 'Almacen de ejemplo uno',
     phone: '3300010001',
     address: 'Av. Patria 500',
     city: 'Zapopan',
@@ -13,7 +13,7 @@ export const consignees: Consignee[] = [
   {
     consigneeNumber: '02',
     customerNumber: '1001',
-    name: 'Almacen de ejemplo 2',
+    name: 'Almacen de ejemplo dos',
     phone: '3300010002',
     address: 'Av. López Mateos 1800',
     city: 'Guadalajara',
@@ -22,7 +22,7 @@ export const consignees: Consignee[] = [
   {
     consigneeNumber: '01',
     customerNumber: '2001',
-    name: 'Almacen de ejemplo 3',
+    name: 'Almacen de ejemplo tres',
     phone: '3300010003',
     address: 'Blvd. Francisco Villa 900',
     city: 'Durango',
