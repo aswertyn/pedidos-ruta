@@ -24,7 +24,6 @@ function adaptarPedido(order, datosCliente, datosConsignado) {
 
     let direccion
     let poblacion
-    let horario
 
     if (esEntregaManual) {
         const manual = order.manualConsignee
@@ -32,11 +31,9 @@ function adaptarPedido(order, datosCliente, datosConsignado) {
         direccion = manual.address
         poblacion = manual.city
 
-        horario = `${manual.receivingStartTime} A ${manual.receivingEndTime}`
     } else {
         direccion = datosConsignado.address
         poblacion = datosConsignado.city
-        horario = `${datosConsignado.receivingStartTime} - ${datosConsignado.receivingEndTime}`
     }
 
     return {
@@ -59,10 +56,11 @@ function adaptarPedido(order, datosCliente, datosConsignado) {
             direccion,
             poblacion,
             telefono: order.consigneePhone,
-            horario,
         },
 
         fechaPedido: order.orderDate,
+        fechaRegistro: order.createdAt,
+        ocurre: order.ocurre,
 
         productos: order.items.map((item) => {
             const tipo = TIPOS_PRODUCTO[item.productType]

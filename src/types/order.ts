@@ -25,6 +25,9 @@ export interface Order {
 
   observations: string
   orderDate: string
+  createdAt: string
   deliveryPriority: DeliveryPriority
   purchaseOrder: string
+
+  ocurre: boolean
 }

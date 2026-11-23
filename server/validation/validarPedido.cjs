@@ -21,13 +21,6 @@ function telefonoValido(valor) {
     )
 }
 
-function horaValida(valor) {
-    return (
-        typeof valor === 'string' &&
-        /^([01]\d|2[0-3]):[0-5]\d$/.test(valor)
-    )
-}
-
 function cantidadValida(valor) {
     return (
         typeof valor === 'number' &&
@@ -100,6 +93,16 @@ function validarPedido(datos) {
 
     if (!fechaValida(order.orderDate)) {
         return 'La fecha del pedido no es válida'
+    }
+
+    if (typeof order.ocurre !== 'boolean') {
+        return 'La modalidad OCURRE no es válida'
+    }
+
+    if (typeof order.createdAt !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(order.createdAt) ||
+        !Number.isFinite(Date.parse(order.createdAt))) {
+        return 'La fecha y hora de registro no son válidas'
     }
 
     if (
@@ -179,22 +182,6 @@ function validarPedido(datos) {
 
     if (!textoValido(consignee.city, 3)) {
         return 'La población del consignado debe tener al menos 3 caracteres'
-    }
-
-    // Horario de recepción
-
-    if (
-        !horaValida(consignee.receivingStartTime) ||
-        !horaValida(consignee.receivingEndTime)
-    ) {
-        return 'El horario de recepción no es válido'
-    }
-
-    if (
-        consignee.receivingEndTime <=
-        consignee.receivingStartTime
-    ) {
-        return 'La hora final debe ser posterior a la inicial'
     }
 
     // Consignación registrada

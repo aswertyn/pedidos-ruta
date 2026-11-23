@@ -48,6 +48,17 @@ function escribir(hoja, celda, valor) {
   }
 }
 
+function formatearFechaPedido(fechaRegistro) {
+  const fecha = new Date(fechaRegistro)
+  if (Number.isNaN(fecha.getTime())) throw new Error('La fecha de registro no es válida')
+  const partes = new Intl.DateTimeFormat('es-MX', {
+    timeZone: 'America/Mexico_City', day: '2-digit', month: 'short', year: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(fecha)
+  const obtener = (tipo) => partes.find((parte) => parte.type === tipo)?.value ?? ''
+  return `${obtener('day')}-${obtener('month').replace('.', '').toLowerCase()}-${obtener('year')} ${obtener('hour')}:${obtener('minute')}`
+}
+
 function obtenerIdentificador(producto) {
   const codigo = normalizar(producto.codigo)
   const modelo = normalizar(producto.modelo)
@@ -98,8 +109,19 @@ async function generarPedido(pedido) {
   escribir(hoja, 'K11', pedido.consignado?.direccion)
   escribir(hoja, 'K13', pedido.consignado?.poblacion)
   escribir(hoja, 'K14', pedido.consignado?.telefono)
-  escribir(hoja, 'K15', pedido.fechaPedido)
-  escribir(hoja, 'O15', pedido.consignado?.horario)
+  const celdaFecha = hoja.getCell('K15')
+  celdaFecha.value = formatearFechaPedido(pedido.fechaRegistro)
+  celdaFecha.alignment = { ...celdaFecha.alignment, horizontal: 'center', vertical: 'middle', shrinkToFit: true }
+
+  const celdaOcurre = hoja.getCell('O15')
+  celdaOcurre.value = 'OCURRE'
+  if (pedido.ocurre === true) {
+    for (const columna of ['O', 'P', 'Q']) {
+      hoja.getCell(`${columna}15`).fill = {
+        type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFE0A3' },
+      }
+    }
+  }
 
   // 4. Productos: limpiar los nombres preimpresos de la plantilla.
   // Solo se limpian las celdas de modelo; no se borran títulos ni fórmulas.

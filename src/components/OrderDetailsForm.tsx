@@ -1,12 +1,10 @@
 import type { DeliveryPriority } from '../types/order'
 
 interface OrderDetailsFormProps {
-  orderDate: string
   deliveryPriority: DeliveryPriority
   purchaseOrder: string
   observations: string
 
-  onOrderDateChange: (value: string) => void
   onDeliveryPriorityChange: (value: DeliveryPriority) => void
   onPurchaseOrderChange: (value: string) => void
   onObservationsChange: (value: string) => void
@@ -14,11 +12,9 @@ interface OrderDetailsFormProps {
 
 function OrderDetailsForm({
 
-  orderDate,
   deliveryPriority,
   purchaseOrder,
   observations,
-  onOrderDateChange,
   onDeliveryPriorityChange,
   onPurchaseOrderChange,
   onObservationsChange,
@@ -30,19 +26,6 @@ function OrderDetailsForm({
       <p className="selector-help">
         Completa la información para finalizar el pedido.
       </p>
-
-      <label className="form-label">
-        Fecha del pedido
-
-        <input
-          className="form-control"
-          type="date"
-          value={orderDate}
-          onChange={(event) =>
-            onOrderDateChange(event.target.value)
-          }
-        />
-      </label>
 
       <div className="delivery-priority">
         <span className="option-title">

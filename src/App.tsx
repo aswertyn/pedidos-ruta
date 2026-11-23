@@ -81,8 +81,10 @@ function App() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([])
   const [currentStep, setCurrentStep] = useState<OrderStep>('agent')
   const [orderDate, setOrderDate] = useState('')
+  const [createdAt, setCreatedAt] = useState('')
   // Declaración pendiente: Estado "programado" como predeterminado actualmente*
   const [deliveryPriority, setDeliveryPriority] = useState<DeliveryPriority>('scheduled')
+  const [ocurre, setOcurre] = useState(false)
   const [purchaseOrder, setPurchaseOrder] = useState('')
   const [folio, setFolio] = useState('')
   const [attemptedContinue, setAttemptedContinue] = useState(false)
@@ -119,7 +121,9 @@ function App() {
     setPolyethyleneBags([])
     setCurrentStep('agent')
     setOrderDate('')
+    setCreatedAt('')
     setDeliveryPriority('scheduled')
+    setOcurre(false)
     setPurchaseOrder('')
     setFolio('')
     setConditions('')
@@ -255,20 +259,14 @@ function App() {
     /^[\p{L}][\p{L} ]*$/u.test(consigneeName.trim()) &&
     /^\d{10}$/.test(consigneePhone) &&
     manualConsignee.address.trim().length >= 10 &&
-    manualConsignee.city.trim().length >= 3 &&
-    manualConsignee.receivingStartTime.trim() !== '' &&
-    manualConsignee.receivingEndTime.trim() !== '' &&
-    manualConsignee.receivingEndTime >
-    manualConsignee.receivingStartTime
+    manualConsignee.city.trim().length >= 3
 
   const hasCompleteManualConsignee =
     manualConsignee !== null &&
     consigneeName.trim() !== '' &&
     consigneePhone.trim() !== '' &&
     manualConsignee.address.trim() !== '' &&
-    manualConsignee.city.trim() !== '' &&
-    manualConsignee.receivingStartTime.trim() !== '' &&
-    manualConsignee.receivingEndTime.trim() !== ''
+    manualConsignee.city.trim() !== ''
 
   const hasCompleteDeliveryDestination =
     selectedConsignee !== null || hasCompleteManualConsignee
@@ -302,8 +300,10 @@ function App() {
 
         observations,
         orderDate,
+        createdAt,
         deliveryPriority,
         purchaseOrder,
+        ocurre,
         folio: folio.trim(),
         conditions: conditions.trim(),
         customerPhone: customerPhone.trim(),
@@ -335,7 +335,7 @@ function App() {
     (currentStep === 'customer' && selectedCustomer !== null) ||
     (currentStep === 'delivery' && hasCompleteDeliveryDestination && hasValidCustomerDetails) ||
     (currentStep === 'products' && orderItems.length > 0) ||
-    (currentStep === 'details' && orderDate !== '') ||
+    currentStep === 'details' ||
     currentStep === 'review'
 
   const handleReturnToCaptureMethods = () => {
@@ -452,7 +452,19 @@ function App() {
 
     if (currentStep === 'customer') goToStep('delivery')
     if (currentStep === 'products') goToStep('details')
-    if (currentStep === 'details') goToStep('review')
+    if (currentStep === 'details') {
+      if (!createdAt) {
+        const now = new Date()
+        const localDate = [
+          now.getFullYear(),
+          String(now.getMonth() + 1).padStart(2, '0'),
+          String(now.getDate()).padStart(2, '0'),
+        ].join('-')
+        setCreatedAt(now.toISOString())
+        setOrderDate(localDate)
+      }
+      goToStep('review')
+    }
 
     if (currentStep === 'review') {
       void handleDescargarExcel()
@@ -790,6 +802,8 @@ function App() {
         {currentStep === 'delivery' && (
           <section>
             <ConsigneeSelector
+              ocurre={ocurre}
+              onOcurreChange={setOcurre}
               customerAddress={customerAddress}
               onCustomerAddressChange={setCustomerAddress}
               customerCity={customerCity}
@@ -839,12 +853,10 @@ function App() {
         {currentStep === 'details' && (
           <section>
             <OrderDetailsForm
-              orderDate={orderDate}
               deliveryPriority={deliveryPriority}
               purchaseOrder={purchaseOrder}
 
               observations={observations}
-              onOrderDateChange={setOrderDate}
               onDeliveryPriorityChange={setDeliveryPriority}
               onPurchaseOrderChange={setPurchaseOrder}
               onObservationsChange={setObservations}

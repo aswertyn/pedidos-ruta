@@ -3,6 +3,8 @@ import type { Consignee } from '../types/consignee'
 import type { ManualConsignee } from '../types/manualConsignee'
 
 interface ConsigneeSelectorProps {
+  ocurre: boolean
+  onOcurreChange: (value: boolean) => void
   customerAddress: string
   onCustomerAddressChange: (value: string) => void
   customerCity: string
@@ -23,6 +25,8 @@ interface ConsigneeSelectorProps {
 }
 
 function ConsigneeSelector({
+  ocurre,
+  onOcurreChange,
   customerAddress,
   onCustomerAddressChange,
   customerCity,
@@ -55,8 +59,6 @@ function ConsigneeSelector({
       onManualConsigneeChange({
         address: '',
         city: '',
-        receivingStartTime: '',
-        receivingEndTime: '',
       })
     }
   }
@@ -68,11 +70,6 @@ function ConsigneeSelector({
     (manualConsignee?.address.trim().length ?? 0) >= 10
   const isCityValid =
     (manualConsignee?.city.trim().length ?? 0) >= 3
-  const isReceivingHoursValid =
-    !!manualConsignee?.receivingStartTime &&
-    !!manualConsignee?.receivingEndTime &&
-    manualConsignee.receivingEndTime >
-    manualConsignee.receivingStartTime
   const isCustomerAddressValid = customerAddress.trim().length >= 10
   const isCustomerCityValid = customerCity.trim().length >= 3
   const isCustomerConditionsValid = customerConditions.trim().length > 0
@@ -259,10 +256,6 @@ function ConsigneeSelector({
                   onManualConsigneeChange({
                     address: value,
                     city: manualConsignee?.city ?? '',
-                    receivingStartTime:
-                      manualConsignee?.receivingStartTime ?? '',
-                    receivingEndTime:
-                      manualConsignee?.receivingEndTime ?? '',
                   })
                 }
               }}
@@ -289,10 +282,6 @@ function ConsigneeSelector({
                   onManualConsigneeChange({
                     address: manualConsignee?.address ?? '',
                     city: value,
-                    receivingStartTime:
-                      manualConsignee?.receivingStartTime ?? '',
-                    receivingEndTime:
-                      manualConsignee?.receivingEndTime ?? '',
                   })
                 }
               }}
@@ -303,47 +292,19 @@ function ConsigneeSelector({
               </small>
             )}
           </label>
-          <div className="time-range">
-            <label>
-              Desde
-              <input
-                type="time"
-                value={manualConsignee?.receivingStartTime ?? ''}
-                onChange={(event) =>
-                  onManualConsigneeChange({
-                    address: manualConsignee?.address ?? '',
-                    city: manualConsignee?.city ?? '',
-                    receivingStartTime: event.target.value,
-                    receivingEndTime:
-                      manualConsignee?.receivingEndTime ?? '',
-                  })
-                }
-              />
-            </label>
-            <label>
-              Hasta
-              <input
-                type="time"
-                value={manualConsignee?.receivingEndTime ?? ''}
-                onChange={(event) =>
-                  onManualConsigneeChange({
-                    address: manualConsignee?.address ?? '',
-                    city: manualConsignee?.city ?? '',
-                    receivingStartTime:
-                      manualConsignee?.receivingStartTime ?? '',
-                    receivingEndTime: event.target.value,
-                  })
-                }
-              />
-            </label>
-          </div>
-          {showValidationErrors && !isReceivingHoursValid && (
-            <small className="field-error" role="alert">
-              El horario de recepción no es válido. La hora final debe ser posterior a la inicial.
-            </small>
-          )}
         </div>
       )}
+      <div className="ocurre-option">
+        <span className="option-title">Modalidad de entrega</span>
+        <button type="button" className={`ocurre-card ${ocurre ? 'selected' : ''}`}
+          onClick={() => onOcurreChange(!ocurre)} aria-pressed={ocurre}>
+          <span className="ocurre-card-content">
+            <strong>Recoger en la empresa</strong>
+            <small>El cliente recogerá el pedido (OCURRE).</small>
+          </span>
+          <span className="ocurre-card-indicator" aria-hidden="true">{ocurre ? '✓' : ''}</span>
+        </button>
+      </div>
     </section>
   )
 

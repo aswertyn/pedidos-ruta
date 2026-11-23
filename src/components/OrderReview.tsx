@@ -169,13 +169,6 @@ function OrderReview({
               <strong>{order.manualConsignee.city}</strong>
             </div>
 
-            <div>
-              <span>Horario</span>
-              <strong>
-                {order.manualConsignee.receivingStartTime} -{' '}
-                {order.manualConsignee.receivingEndTime}
-              </strong>
-            </div>
           </div>
         ) : (
           <p className="empty-message">
@@ -278,6 +271,16 @@ function OrderReview({
           <div>
             <span>Fecha</span>
             <strong>{order.orderDate}</strong>
+          </div>
+
+          <div>
+            <span>Fecha y hora de registro</span>
+            <strong>{order.createdAt ? new Date(order.createdAt).toLocaleString('es-MX', { timeZone: 'America/Mexico_City', dateStyle: 'short', timeStyle: 'short' }) : 'Pendiente'}</strong>
+          </div>
+
+          <div>
+            <span>Modalidad</span>
+            <strong>{order.ocurre ? 'Recoger en la empresa (OCURRE)' : 'Entrega normal'}</strong>
           </div>
 
           <div>

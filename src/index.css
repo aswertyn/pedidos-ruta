@@ -731,6 +731,15 @@ button {
   margin-bottom: 20px;
 }
 
+.ocurre-option { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.ocurre-card { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px; background: #fff; border: 1px solid #d5dce8; border-radius: 10px; text-align: left; cursor: pointer; font: inherit; color: #071f65; transition: border-color 0.2s, background-color 0.2s; }
+.ocurre-card.selected { background: #fff8ec; border: 1px solid #f0a000; color: #071f65; }
+.ocurre-card-content { display: flex; flex-direction: column; gap: 5px; }
+.ocurre-card-content small { color: #52617a; font-size: 12px; font-weight: 400; }
+.ocurre-card-indicator { width: 22px; height: 22px; flex-shrink: 0; border: 2px solid #aab6cc; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.ocurre-card.selected .ocurre-card-indicator { background: #f0a000; border-color: #f0a000; color: #ffffff; }
+.ocurre-card:focus-visible { outline: 3px solid #7798ef; outline-offset: 3px; }
+
 .order-item-form h2 {
   margin: 0 0 6px;
   color: var(--color-primary);
