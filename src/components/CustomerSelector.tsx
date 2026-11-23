@@ -3,41 +3,38 @@ import { useState } from 'react'
 import type { Customer } from '../types/customer'
 
 interface CustomerSelectorProps {
-
   customers: Customer[]
   selectedCustomer: Customer | null
   onCustomerChange: (customerNumber: string) => void
 }
 
 function CustomerSelector({
-
   customers,
   selectedCustomer,
   onCustomerChange,
 }: CustomerSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
-  const filteredCustomers = customers.filter((customer) => {
-    const search = searchTerm.toLowerCase().trim()
+  const search = searchTerm.toLowerCase().trim()
 
-    return (
+  const filteredCustomers = customers.filter((customer) =>
       customer.customerNumber.toLowerCase().includes(search) ||
-      customer.name.toLowerCase().includes(search)
-    )
-  })
+      customer.name.toLowerCase().includes(search) ||
+      (customer.contactName ?? '').toLowerCase().includes(search)
+  )
 
   return (
     <section className="customer-selector">
       <h2>Seleccionar cliente</h2>
 
       <p className="selector-help">
-        Busca por número o nombre del cliente.
+        Busca por número de cliente, tienda o contacto.
       </p>
 
       <input
         className="customer-search"
         type="search"
-        placeholder="Número o nombre del cliente"
+        placeholder="Número, tienda o contacto"
         value={searchTerm}
         onChange={(event) => setSearchTerm(event.target.value)}
       />
@@ -68,12 +65,11 @@ function CustomerSelector({
                   {customer.name}
                 </span>
 
-                <span>{customer.address}</span>
-                <span>{customer.phone}</span>
-                <span>Condiciones: {customer.conditions || 'Sin especificar'}</span>
-                <span className="customer-city">
-                  {customer.city}
-                </span>
+                {customer.contactName && (
+                  <span>Contacto: {customer.contactName}</span>
+                )}
+
+                <span>Teléfono: {customer.phone || 'Sin teléfono'}</span>
               </span>
 
               {isSelected && (

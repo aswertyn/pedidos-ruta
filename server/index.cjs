@@ -12,6 +12,11 @@ const { adaptarPedido } = require('./excel/adaptarPedido.cjs')
 const { generarPedido } = require('./excel/generarPedido.cjs')
 const { enviarPedidoN8n } = require('./integrations/n8n.cjs')
 const { validarPedido } = require('./validation/validarPedido.cjs')
+const {
+    consultarClientes,
+    consultarProductos,
+    consultarPedidos,
+} = require('./pedidosWebService.cjs');
 
 require('dotenv').config({
     path: require('node:path').join(__dirname, '..', '.env'),
@@ -748,6 +753,99 @@ app.post('/api/pedidos/enviar', async (req, res) => {
 
         return res.status(502).json({
             message: 'No se pudo confirmar la recepción en n8n'
+        });
+    }
+});
+
+//WebService
+const autenticarConsultaWS = (req, res, next) => {
+    if (!req.session?.user) {
+        return res.status(401).json({
+            message: 'Debes iniciar sesión',
+        });
+    }
+
+    next();
+};
+
+app.get('/api/webservice/clientes', autenticarConsultaWS, async (req, res) => {
+    try {
+        const clientes = await consultarClientes();
+        return res.json(clientes);
+    } catch (error) {
+        console.error('Error consultando clientes:', error);
+        return res.status(502).json({
+            message: 'No fue posible consultar clientes',
+        });
+    }
+});
+
+app.get('/api/webservice/productos', autenticarConsultaWS, async (req, res) => {
+    try {
+        const datos = req.query.datos ?? '';
+
+        if (typeof datos !== 'string' || datos.length > 100) {
+            return res.status(400).json({
+                message: 'Búsqueda de productos inválida',
+            });
+        }
+
+        const productos = await consultarProductos(datos);
+        return res.json(productos);
+    } catch (error) {
+        console.error('Error consultando productos:', error);
+        return res.status(502).json({
+            message: 'No fue posible consultar productos',
+        });
+    }
+});
+
+app.get('/api/webservice/pedidos', autenticarConsultaWS, async (req, res) => {
+    const { desde, hasta } = req.query;
+
+    const convertirFecha = (valor) => {
+        if (typeof valor !== 'string') return null;
+
+        const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(valor);
+        if (!partes) return null;
+
+        const [, anio, mes, dia] = partes;
+        const fecha = new Date(Date.UTC(+anio, +mes - 1, +dia));
+
+        if (
+            fecha.getUTCFullYear() !== +anio ||
+            fecha.getUTCMonth() + 1 !== +mes ||
+            fecha.getUTCDate() !== +dia
+        ) {
+            return null;
+        }
+
+        return {
+            fecha,
+            formatoWS: `${dia}/${mes}/${anio}`,
+        };
+    };
+
+    const inicio = convertirFecha(desde);
+    const fin = convertirFecha(hasta);
+
+    if (!inicio || !fin || inicio.fecha > fin.fecha) {
+        return res.status(400).json({
+            message: 'Indica un rango de fechas válido (AAAA-MM-DD)',
+        });
+    }
+
+    try {
+        const pedidos = await consultarPedidos(
+            inicio.formatoWS,
+            fin.formatoWS
+        );
+
+        return res.json(pedidos);
+    } catch (error) {
+        console.error('Error consultando pedidos:', error);
+        return res.status(502).json({
+            message: 'No fue posible consultar pedidos',
         });
     }
 });

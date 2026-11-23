@@ -1,7 +1,7 @@
 import type { BedSize, ProductType } from './product'
 
 export interface OrderItem {
- // productNumber: string
+  codigo?: string
   model: string
   productType: ProductType
   bedSize: BedSize

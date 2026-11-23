@@ -75,6 +75,7 @@ function adaptarPedido(order, datosCliente, datosConsignado) {
             }
 
             return {
+                codigo: item.codigo ?? null,
                 modelo: item.model,
                 tipo,
                 tamaño,

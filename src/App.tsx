@@ -13,13 +13,14 @@ import PolyethyleneBagForm from './components/PolyethyleneBagForm'
 import PhotoCapture from './components/PhotoCapture'
 import PhotoGallery from './components/PhotoGallery'
 import LoginPage from './pages/LoginPage'
+import ConsultaWebServicePage from './pages/ConsultaWebServicePage'
 import type { AuthUser } from './services/authService'
 import { getCurrentUser, logout } from './services/authService'
 import { descargarExcel } from './services/excelService'
 import { enviarPedidoN8n } from './services/n8nService'
+import { obtenerClientes } from './services/webService'
 
 import { agents } from './data/agents'
-import { customers } from './data/customers'
 import { consignees } from './data/consignees'
 
 import type { Agent } from './types/agent'
@@ -39,7 +40,9 @@ const currencyFormatter = new Intl.NumberFormat('es-MX', {
 function App() {
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthUser | null>(null)
   const [checkingSession, setCheckingSession] = useState(true)
-  const [captureMode, setCaptureMode] = useState<'manual' | 'photo' | 'gallery' | null>(null)
+  const [captureMode, setCaptureMode] = useState<
+    'manual' | 'photo' | 'gallery' | 'webservice' | null
+  >(null)
   useEffect(() => {
     let active = true
 
@@ -68,6 +71,9 @@ function App() {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
   const [selectedCustomer, setSelectedCustomer] =
     useState<Customer | null>(null)
+  const [webServiceCustomers, setWebServiceCustomers] = useState<Customer[]>([])
+  const [loadingCustomers, setLoadingCustomers] = useState(false)
+  const [customersError, setCustomersError] = useState('')
   const [selectedConsignee, setSelectedConsignee] =
     useState<Consignee | null>(null)
   const [manualConsignee, setManualConsignee] =
@@ -82,6 +88,8 @@ function App() {
   const [attemptedContinue, setAttemptedContinue] = useState(false)
   const [conditions, setConditions] = useState('')
   const [customerPhone, setCustomerPhone] = useState('')
+  const [customerAddress, setCustomerAddress] = useState('')
+  const [customerCity, setCustomerCity] = useState('')
   const [consigneeName, setConsigneeName] = useState('')
   const [consigneePhone, setConsigneePhone] = useState('')
 
@@ -116,6 +124,8 @@ function App() {
     setFolio('')
     setConditions('')
     setCustomerPhone('')
+    setCustomerAddress('')
+    setCustomerCity('')
     setConsigneeName('')
     setConsigneePhone('')
 
@@ -162,6 +172,8 @@ function App() {
 
     setSelectedAgent(agent ?? null)
     setCustomerPhone('')
+    setCustomerAddress('')
+    setCustomerCity('')
     setConditions('')
     setConsigneeName('')
     setConsigneePhone('')
@@ -172,14 +184,41 @@ function App() {
     setPolyethyleneBags([])
   }
 
+  const cargarClientes = async () => {
+    setLoadingCustomers(true)
+    setCustomersError('')
+
+    try {
+      const clientesWS = await obtenerClientes()
+      const clientes: Customer[] = clientesWS.map((cliente) => ({
+        customerNumber: cliente.id_cliente,
+        name: cliente.nombre_tienda ?? '',
+        contactName: [cliente.nombre, cliente.paterno, cliente.materno].filter(Boolean).join(' '),
+        phone: cliente.telefono ?? '',
+        address: '',
+        city: '',
+        conditions: '',
+        agentNumber: '',
+      }))
+      setWebServiceCustomers(clientes)
+    } catch (error) {
+      console.error('Error al consultar clientes:', error)
+      setCustomersError(error instanceof Error ? error.message : 'No fue posible consultar los clientes')
+    } finally {
+      setLoadingCustomers(false)
+    }
+  }
+
   const handleCustomerChange = (customerNumber: string) => {
-    const customer = customers.find(
+    const customer = webServiceCustomers.find(
       (customer) => customer.customerNumber === customerNumber,
     )
 
     setSelectedCustomer(customer ?? null)
+    setCustomerAddress('')
+    setCustomerCity('')
     setCustomerPhone(customer?.phone ?? '')
-    setConditions(customer?.conditions ?? '')
+    setConditions('')
     setConsigneeName('')
     setConsigneePhone('')
     setSelectedConsignee(null)
@@ -200,12 +239,8 @@ function App() {
     setConsigneePhone(consignee?.phone ?? '')
   }
 
-  const agentCustomers = selectedAgent
-    ? customers.filter(
-      (customer) =>
-        customer.agentNumber === selectedAgent.agentNumber,
-    )
-    : []
+  // Mostrar todos los clientes hasta disponer de la relación cliente-agente.
+  const agentCustomers = selectedAgent ? webServiceCustomers : []
 
   const customerConsignees = selectedCustomer
     ? consignees.filter(
@@ -240,6 +275,15 @@ function App() {
 
   const hasDeliveryDestination =
     selectedConsignee !== null || hasValidManualConsignee
+
+  const completedCustomer: Customer | null = selectedCustomer
+    ? {
+      ...selectedCustomer,
+      address: customerAddress.trim(),
+      city: customerCity.trim(),
+      conditions: conditions.trim(),
+    }
+    : null
 
   const order: Order | null =
     selectedAgent && selectedCustomer
@@ -281,10 +325,15 @@ function App() {
 
   const showBackButton = currentStep !== 'agent'
 
+  const hasValidCustomerDetails =
+    customerAddress.trim().length >= 10 &&
+    customerCity.trim().length >= 3 &&
+    conditions.trim().length > 0
+
   const showNextButton =
     (currentStep === 'agent' && selectedAgent !== null && /^\d{1,10}$/.test(folio)) ||
     (currentStep === 'customer' && selectedCustomer !== null) ||
-    (currentStep === 'delivery' && hasCompleteDeliveryDestination) ||
+    (currentStep === 'delivery' && hasCompleteDeliveryDestination && hasValidCustomerDetails) ||
     (currentStep === 'products' && orderItems.length > 0) ||
     (currentStep === 'details' && orderDate !== '') ||
     currentStep === 'review'
@@ -322,14 +371,14 @@ function App() {
   }
 
   const handleDescargarExcel = async () => {
-    if (!order || !selectedCustomer || generandoExcel) return
+    if (!order || !completedCustomer || generandoExcel) return
 
     try {
       setGenerandoExcel(true)
 
       await descargarExcel({
         order,
-        customer: selectedCustomer,
+        customer: completedCustomer,
         consignee: selectedConsignee,
       })
     } catch (error) {
@@ -380,6 +429,10 @@ function App() {
         return
       }
 
+      if (webServiceCustomers.length === 0 && !loadingCustomers) {
+        void cargarClientes()
+      }
+
       goToStep('customer')
       return
     }
@@ -387,7 +440,7 @@ function App() {
     if (currentStep === 'delivery') {
       setAttemptedContinue(true)
 
-      if (!hasDeliveryDestination) {
+      if (!hasDeliveryDestination || !hasValidCustomerDetails) {
         return
       }
 
@@ -499,8 +552,64 @@ function App() {
 
                 <span className="capture-card-arrow" aria-hidden="true">›</span>
               </button>
+              <button
+                type="button"
+                className="capture-card"
+                onClick={() => setCaptureMode('webservice')}
+              >
+                <span className="capture-card-icon" aria-hidden="true">
+                  <FaPencilAlt />
+                </span>
+
+                <span className="capture-card-content">
+                  <strong>Consultas Web Service</strong>
+                  <span>
+                    Consultar clientes, productos y pedidos.
+                  </span>
+                </span>
+
+                <span className="capture-card-arrow" aria-hidden="true">
+                  ›
+                </span>
+              </button>
             </div>
           </section>
+        </div>
+      </main>
+    )
+  }
+
+  if (captureMode === 'webservice') {
+    return (
+      <main className="app-container">
+        <div className="app-top">
+          <header className="app-header">
+            <div className="header-top">
+              <h1>Consultas Web Service</h1>
+
+              <div className="header-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setCaptureMode(null)}
+                >
+                  Regresar
+                </button>
+
+                <button
+                  type="button"
+                  className="logout-button"
+                  onClick={handleLogout}
+                >
+                  Salir
+                </button>
+              </div>
+            </div>
+          </header>
+        </div>
+
+        <div className="app-content">
+          <ConsultaWebServicePage />
         </div>
       </main>
     )
@@ -657,18 +766,36 @@ function App() {
 
         {currentStep === 'customer' && (
           <section>
-            <CustomerSelector
-
-              customers={agentCustomers}
-              selectedCustomer={selectedCustomer}
-              onCustomerChange={handleCustomerChange}
-            />
+            {loadingCustomers && (
+              <p className="selector-help">Consultando clientes del Web Service...</p>
+            )}
+            {customersError && (
+              <div role="alert">
+                <p className="field-error">{customersError}</p>
+                <button type="button" className="secondary-button" onClick={() => void cargarClientes()} disabled={loadingCustomers}>
+                  Reintentar consulta
+                </button>
+              </div>
+            )}
+            {!loadingCustomers && !customersError && (
+              <CustomerSelector
+                customers={agentCustomers}
+                selectedCustomer={selectedCustomer}
+                onCustomerChange={handleCustomerChange}
+              />
+            )}
           </section>
         )}
 
         {currentStep === 'delivery' && (
           <section>
             <ConsigneeSelector
+              customerAddress={customerAddress}
+              onCustomerAddressChange={setCustomerAddress}
+              customerCity={customerCity}
+              onCustomerCityChange={setCustomerCity}
+              customerConditions={conditions}
+              onCustomerConditionsChange={setConditions}
               consigneeName={consigneeName}
               onConsigneeNameChange={setConsigneeName}
               consigneePhone={consigneePhone}
@@ -728,12 +855,12 @@ function App() {
         {currentStep === 'review' &&
           order &&
           selectedAgent &&
-          selectedCustomer && (
+          completedCustomer && (
             <section>
               <OrderReview
                 order={order}
                 agent={selectedAgent}
-                customer={selectedCustomer}
+                customer={completedCustomer}
                 consignee={selectedConsignee}
               />
               <button

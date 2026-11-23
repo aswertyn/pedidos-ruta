@@ -1,44 +1,53 @@
 import { useState } from 'react'
-
 import type { Consignee } from '../types/consignee'
 import type { ManualConsignee } from '../types/manualConsignee'
 
 interface ConsigneeSelectorProps {
+  customerAddress: string
+  onCustomerAddressChange: (value: string) => void
+  customerCity: string
+  onCustomerCityChange: (value: string) => void
+  customerConditions: string
+  onCustomerConditionsChange: (value: string) => void
   consigneeName: string
   onConsigneeNameChange: (value: string) => void
   consigneePhone: string
   onConsigneePhoneChange: (value: string) => void
   showValidationErrors: boolean
-
   consignees: Consignee[]
   selectedConsignee: Consignee | null
   manualConsignee: ManualConsignee | null
   onConsigneeChange: (consigneeNumber: string) => void
   onManualConsigneeChange: (manualConsignee: ManualConsignee) => void
+
 }
 
 function ConsigneeSelector({
+  customerAddress,
+  onCustomerAddressChange,
+  customerCity,
+  onCustomerCityChange,
+  customerConditions,
+  onCustomerConditionsChange,
   consigneeName,
   onConsigneeNameChange,
   consigneePhone,
   onConsigneePhoneChange,
   showValidationErrors,
-
   consignees,
   selectedConsignee,
   manualConsignee,
   onConsigneeChange,
   onManualConsigneeChange,
+
 }: ConsigneeSelectorProps) {
   const [useManualAddress, setUseManualAddress] = useState(
     selectedConsignee === null && (manualConsignee !== null || consignees.length === 0),
   )
-
   const handleConsigneeSelection = (consigneeNumber: string) => {
     setUseManualAddress(false)
     onConsigneeChange(consigneeNumber)
   }
-
   const handleManualSelection = () => {
     setUseManualAddress(true)
     onConsigneeChange('')
@@ -51,33 +60,68 @@ function ConsigneeSelector({
       })
     }
   }
-
   const isNameValid =
     consigneeName.trim().length >= 2 &&
     /^[\p{L}][\p{L} ]*$/u.test(consigneeName.trim())
-
   const isPhoneValid = /^\d{10}$/.test(consigneePhone)
-
   const isAddressValid =
     (manualConsignee?.address.trim().length ?? 0) >= 10
-
   const isCityValid =
     (manualConsignee?.city.trim().length ?? 0) >= 3
-
   const isReceivingHoursValid =
     !!manualConsignee?.receivingStartTime &&
     !!manualConsignee?.receivingEndTime &&
     manualConsignee.receivingEndTime >
     manualConsignee.receivingStartTime
-
+  const isCustomerAddressValid = customerAddress.trim().length >= 10
+  const isCustomerCityValid = customerCity.trim().length >= 3
+  const isCustomerConditionsValid = customerConditions.trim().length > 0
   return (
     <section className="consignee-selector">
+      <div className="manual-address-form customer-details-form">
+        <h3>Datos complementarios del cliente</h3>
+        <p className="selector-help">Completa la información del cliente para el pedido.</p>
+        <label className="form-label">
+          Dirección del cliente
+          <input className="form-control" type="text" maxLength={200} required
+            value={customerAddress}
+            onChange={(event) => onCustomerAddressChange(event.target.value)}
+            placeholder="Dirección del cliente"
+            aria-invalid={showValidationErrors && !isCustomerAddressValid}
+          />
+          {showValidationErrors && !isCustomerAddressValid && (
+            <small className="field-error" role="alert">La dirección debe contener al menos 10 caracteres.</small>
+          )}
+        </label>
+        <label className="form-label">
+          Población del cliente
+          <input className="form-control" type="text" maxLength={100} required
+            value={customerCity}
+            onChange={(event) => onCustomerCityChange(event.target.value)}
+            placeholder="Población del cliente"
+            aria-invalid={showValidationErrors && !isCustomerCityValid}
+          />
+          {showValidationErrors && !isCustomerCityValid && (
+            <small className="field-error" role="alert">La población debe contener al menos 3 caracteres.</small>
+          )}
+        </label>
+        <label className="form-label">
+          Condiciones
+          <input className="form-control" type="text" maxLength={100} required
+            value={customerConditions}
+            onChange={(event) => onCustomerConditionsChange(event.target.value)}
+            placeholder="Ej. Contado"
+            aria-invalid={showValidationErrors && !isCustomerConditionsValid}
+          />
+          {showValidationErrors && !isCustomerConditionsValid && (
+            <small className="field-error" role="alert">Las condiciones son obligatorias.</small>
+          )}
+        </label>
+      </div>
       <h2>Lugar de entrega</h2>
-
       <p className="selector-help">
         Selecciona dónde se entregará el pedido.
       </p>
-
       {consignees.length > 0 && (
         <div className="consignee-list">
           {consignees.map((consignee) => {
@@ -85,7 +129,6 @@ function ConsigneeSelector({
               !useManualAddress &&
               selectedConsignee?.consigneeNumber ===
               consignee.consigneeNumber
-
             return (
               <button
                 key={consignee.consigneeNumber}
@@ -102,20 +145,16 @@ function ConsigneeSelector({
                   <span className="consignee-number">
                     Consignación {consignee.consigneeNumber}
                   </span>
-
                   <span>{consignee.name} ? {consignee.phone}</span>
                   <span className="consignee-address">
                     {consignee.address}
                   </span>
-
                   <span className="consignee-city">
                     {consignee.city}
                   </span>
-
                   <span className="consignee-hours">
                     Horario: {consignee.receivingStartTime} - {consignee.receivingEndTime}                  </span>
                 </span>
-
                 {isSelected && (
                   <span className="selection-check">
                     ✓
@@ -124,7 +163,6 @@ function ConsigneeSelector({
               </button>
             )
           })}
-
           <button
             type="button"
             className={`manual-address-card ${useManualAddress ? 'selected' : ''
@@ -132,17 +170,14 @@ function ConsigneeSelector({
             onClick={handleManualSelection}
           >
             <span className="manual-address-symbol">+</span>
-
             <span className="consignee-information">
               <span className="consignee-number">
                 Otra dirección
               </span>
-
               <span className="consignee-city">
                 Capturar lugar de entrega manualmente
               </span>
             </span>
-
             {useManualAddress && (
               <span className="selection-check">
                 ✓
@@ -151,7 +186,6 @@ function ConsigneeSelector({
           </button>
         </div>
       )}
-
       {consignees.length === 0 && (
         <div className="consignee-notice">
           <strong>Sin consignaciones registradas</strong>
@@ -160,11 +194,9 @@ function ConsigneeSelector({
           </span>
         </div>
       )}
-
       {useManualAddress && (
         <div className="manual-address-form">
           <h3>Dirección de entrega</h3>
-
           <label className="form-label">
             Nombre del consignado
             <input
@@ -177,7 +209,6 @@ function ConsigneeSelector({
               aria-invalid={showValidationErrors && !isNameValid}
               onChange={(event) => {
                 const value = event.target.value
-
                 if (/^[\p{L} ]*$/u.test(value)) {
                   onConsigneeNameChange(value)
                 }
@@ -190,7 +221,6 @@ function ConsigneeSelector({
               </small>
             )}
           </label>
-
           <label className="form-label">
             Teléfono del consignado
             <input
@@ -213,9 +243,6 @@ function ConsigneeSelector({
               </small>
             )}
           </label>
-
-
-
           <label>
             Dirección
             <input
@@ -228,7 +255,6 @@ function ConsigneeSelector({
               value={manualConsignee?.address ?? ''}
               onChange={(event) => {
                 const value = event.target.value
-
                 if (/^[\p{L}\p{N}\s,.#-]*$/u.test(value)) {
                   onManualConsigneeChange({
                     address: value,
@@ -247,7 +273,6 @@ function ConsigneeSelector({
               </small>
             )}
           </label>
-
           <label>
             Población
             <input
@@ -260,7 +285,6 @@ function ConsigneeSelector({
               value={manualConsignee?.city ?? ''}
               onChange={(event) => {
                 const value = event.target.value
-
                 if (/^[\p{L}\s]*$/u.test(value)) {
                   onManualConsigneeChange({
                     address: manualConsignee?.address ?? '',
@@ -279,7 +303,6 @@ function ConsigneeSelector({
               </small>
             )}
           </label>
-
           <div className="time-range">
             <label>
               Desde
@@ -297,7 +320,6 @@ function ConsigneeSelector({
                 }
               />
             </label>
-
             <label>
               Hasta
               <input
@@ -324,6 +346,7 @@ function ConsigneeSelector({
       )}
     </section>
   )
+
 }
 
 export default ConsigneeSelector

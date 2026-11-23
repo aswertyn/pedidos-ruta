@@ -90,8 +90,8 @@ function OrderReview({
             <strong>{order.folio || 'Sin especificar'}</strong>
           </div>
           <div>
-            <span>Condiciones (opcional)</span>
-            <strong>{order.conditions || 'Sin especificar'}</strong>
+            <span>Condiciones del cliente</span>
+            <strong>{customer.conditions || 'Sin especificar'}</strong>
           </div>
           <div>
             <span>Teléfono del cliente</span>
@@ -202,6 +202,8 @@ function OrderReview({
               <div className="review-product-header">
                 <div>
                   <strong>{item.model}</strong>
+
+                  {item.codigo && <p>Código: {item.codigo}</p>}
                 </div>
 
                 <strong>

@@ -1,9 +1,15 @@
 export interface Customer {
+  // Datos del Web Service
   customerNumber: string
-  phone: string
-  conditions: string
   name: string
+  contactName?: string
+  phone: string
+
+  // Datos complementarios para Excel
   address: string
   city: string
-  agentNumber: string //FK
+  conditions: string
+
+  // Relación con el agente
+  agentNumber: string
 }
