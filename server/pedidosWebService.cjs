@@ -6,7 +6,7 @@ const parser = new XMLParser({
   processEntities: true,
 });
 
-async function consultarServicio(operacion, parametros = {}) {
+async function consultarServicio(operacion, parametros = {}, esperaArreglo = true) {
   const baseUrl = process.env.PEDIDOS_WS_URL;
 
   if (!baseUrl) {
@@ -54,11 +54,19 @@ async function consultarServicio(operacion, parametros = {}) {
     throw new Error(contenido.mensaje || 'Error del Web Service');
   }
 
-  if (!Array.isArray(contenido)) {
+  if (esperaArreglo && !Array.isArray(contenido)) {
     throw new Error('El servicio no devolvió un arreglo');
   }
 
   return contenido;
+}
+
+async function crearPedido(parametros) {
+  const resultado = await consultarServicio('CrearPedido', parametros, false);
+  if (!resultado || typeof resultado !== 'object' || resultado.status !== 'OK' || resultado.idPedido == null || String(resultado.idPedido).trim() === '') {
+    throw new Error('El servicio no confirm? el registro de la partida');
+  }
+  return resultado;
 }
 
 function consultarClientes() {
@@ -77,6 +85,7 @@ function consultarPedidos(desde, hasta) {
 }
 
 module.exports = {
+  crearPedido,
   consultarClientes,
   consultarProductos,
   consultarPedidos,

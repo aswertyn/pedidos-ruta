@@ -10,9 +10,9 @@ const { iniciarLimpiezaSesiones } = require('./sessionCleanup.cjs')
 const multer = require('multer')
 const { adaptarPedido } = require('./excel/adaptarPedido.cjs')
 const { generarPedido } = require('./excel/generarPedido.cjs')
-const { enviarPedidoN8n } = require('./integrations/n8n.cjs')
 const { validarPedido } = require('./validation/validarPedido.cjs')
 const {
+    crearPedido,
     consultarClientes,
     consultarProductos,
     consultarPedidos,
@@ -725,36 +725,55 @@ app.post('/api/pedidos/exportar-excel', async (req, res) => {
 // autorización y completar las validaciones críticas del pedido.
 
 app.post('/api/pedidos/enviar', async (req, res) => {
-    // Comprobar que el usuario completó la autenticación
     if (!req.session?.user) {
-        return res.status(401).json({
-            message: 'Debes iniciar sesión para enviar pedidos'
-        });
+        return res.status(401).json({ message: 'Debes iniciar sesi?n para enviar pedidos' });
     }
 
-    const errorValidacion = validarPedido(req.body);
-
-    if (errorValidacion) {
-        return res.status(400).json({
-            message: errorValidacion
-        });
+    const { order, moneda } = req.body || {};
+    const texto = (valor) => typeof valor === 'string' && valor.trim().length > 0;
+    if (!order || !texto(order.purchaseOrder) || !texto(order.customerNumber) ||
+        !texto(order.consigneeName) || !/^\d+$/.test(String(order.agentNumber ?? '')) ||
+        Number(order.agentNumber) > 2147483647 || !['MXN', 'USD'].includes(moneda) ||
+        !Array.isArray(order.items) || order.items.length === 0) {
+        return res.status(400).json({ message: 'Revisa la orden de compra, cliente, consignado, agente, moneda y productos.' });
+    }
+    if (!Array.isArray(order.polyethyleneBag) || order.polyethyleneBag.length > 0) {
+        return res.status(400).json({ message: 'Las bolsas de polietileno a?n no se pueden enviar al webservice. Ret?ralas antes de continuar.' });
+    }
+    for (const [index, item] of order.items.entries()) {
+        if (!item || !texto(item.codigo) || !texto(item.model) ||
+            !Number.isInteger(item.quantity) || item.quantity <= 0 || item.quantity > 2147483647 ||
+            typeof item.price !== 'number' || !Number.isFinite(item.price) || item.price < 0) {
+            return res.status(400).json({ message: `Revisa el c?digo, descripci?n, cantidad y precio del producto ${index + 1}.` });
+        }
     }
 
-    try {
-        const resultado = await enviarPedidoN8n(req.body);
-
-        return res.json({
-            message: 'Pedido recibido por n8n',
-            resultado
-        });
-
-    } catch (error) {
-        console.error('Error al enviar pedido:', error);
-
-        return res.status(502).json({
-            message: 'No se pudo confirmar la recepción en n8n'
-        });
+    const registradas = [];
+    for (const [index, item] of order.items.entries()) {
+        try {
+            const respuesta = await crearPedido({
+                ordenCompra: order.purchaseOrder.trim(),
+                Consignado: order.consigneeName.trim(),
+                ClienteProbeedor: order.customerNumber.trim(),
+                idAgente: String(Number(order.agentNumber)),
+                costo: String(item.price),
+                codigo: item.codigo.trim(),
+                Descripcion: item.model.trim(),
+                cantidad: String(item.quantity),
+                moneda,
+            });
+            registradas.push({ index, codigo: item.codigo, idPedido: String(respuesta.idPedido) });
+        } catch (error) {
+            console.error('No se pudo confirmar la partida:', error);
+            return res.status(502).json({
+                message: 'No se pudo confirmar la partida indicada. Consulta el webservice antes de volver a enviar: podr?a haberse registrado.',
+                registradas,
+                partidaIncierta: { index, codigo: item.codigo },
+                pendientes: order.items.slice(index + 1).map((pendiente, offset) => ({ index: index + 1 + offset, codigo: pendiente.codigo })),
+            });
+        }
     }
+    return res.json({ message: 'Todas las partidas fueron registradas.', registradas });
 });
 
 //WebService

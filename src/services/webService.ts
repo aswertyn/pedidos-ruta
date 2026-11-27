@@ -1,3 +1,5 @@
+import type { Order } from '../types/order'
+
 
 export interface ClienteWS {
   id: number
@@ -68,4 +70,28 @@ export function obtenerPedidos(desde: string, hasta: string) {
   return consultar<PedidoWS>(
     `/api/webservice/pedidos?${parametros.toString()}`
   )
+}
+
+export interface ResultadoEnvio {
+  message: string
+  registradas: { index: number; codigo: string; idPedido: string }[]
+  partidaIncierta?: { index: number; codigo: string }
+  pendientes?: { index: number; codigo: string }[]
+}
+
+export class ErrorValidacionEnvio extends Error {}
+
+export async function enviarPedidoWS(order: Order, moneda: 'MXN' | 'USD'): Promise<ResultadoEnvio> {
+  const respuesta = await fetch('/api/pedidos/enviar', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order, moneda }),
+  })
+  const resultado = await respuesta.json() as ResultadoEnvio
+  if (!respuesta.ok && !resultado.partidaIncierta) {
+    if (respuesta.status === 400 || respuesta.status === 401) throw new ErrorValidacionEnvio(resultado.message)
+    throw new Error(resultado.message || 'No fue posible enviar el pedido')
+  }
+  return resultado
 }

@@ -17,8 +17,8 @@ import ConsultaWebServicePage from './pages/ConsultaWebServicePage'
 import type { AuthUser } from './services/authService'
 import { getCurrentUser, logout } from './services/authService'
 import { descargarExcel } from './services/excelService'
-import { enviarPedidoN8n } from './services/n8nService'
-import { obtenerClientes } from './services/webService'
+import { ErrorValidacionEnvio, enviarPedidoWS, obtenerClientes } from './services/webService'
+import type { ResultadoEnvio } from './services/webService'
 
 import { agents } from './data/agents'
 import { consignees } from './data/consignees'
@@ -100,6 +100,9 @@ function App() {
   const [generandoExcel, setGenerandoExcel] = useState(false)
   const [enviandoPedido, setEnviandoPedido] = useState(false)
   const [pedidoEnviado, setPedidoEnviado] = useState(false)
+  const [moneda, setMoneda] = useState<'MXN' | 'USD'>('MXN')
+  const [resultadoEnvio, setResultadoEnvio] = useState<ResultadoEnvio | null>(null)
+  const [envioIncierto, setEnvioIncierto] = useState(false)
 
   const handleLogout = async () => {
     try {
@@ -110,6 +113,10 @@ function App() {
       return
     }
 
+    setPedidoEnviado(false)
+    setResultadoEnvio(null)
+    setEnvioIncierto(false)
+    setMoneda('MXN')
     setAuthenticatedUser(null)
     setCaptureMode(null)
 
@@ -395,27 +402,34 @@ function App() {
   }
 
   const handleEnviarPedido = async () => {
-    if (!order || !selectedCustomer || enviandoPedido || pedidoEnviado) return
-
+    if (!order || enviandoPedido || pedidoEnviado || envioIncierto) return
+    if (!order.purchaseOrder.trim()) {
+      alert('Ingresa una orden de compra antes de enviar el pedido.')
+      return
+    }
+    if (order.polyethyleneBag.length > 0) {
+      alert('Las bolsas de polietileno a?n no se pueden enviar al webservice. Ret?ralas antes de continuar.')
+      return
+    }
+    const sinCodigo = order.items.findIndex((item) => !item.codigo?.trim())
+    if (sinCodigo !== -1) {
+      alert(`El producto ${sinCodigo + 1} no tiene c?digo. Selecciona un producto del cat?logo.`)
+      return
+    }
+    setEnviandoPedido(true)
     try {
-      setEnviandoPedido(true)
-
-      await enviarPedidoN8n({
-        order,
-        customer: selectedCustomer,
-        consignee: selectedConsignee,
-      })
-
-      setPedidoEnviado(true)
-      alert('Pedido recibido por n8n correctamente')
+      const resultado = await enviarPedidoWS(order, moneda)
+      setResultadoEnvio(resultado)
+      if (resultado.partidaIncierta) setEnvioIncierto(true)
+      else setPedidoEnviado(true)
     } catch (error) {
-      console.error('Error al enviar pedido:', error)
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : 'No fue posible enviar el pedido'
-      )
+      if (error instanceof ErrorValidacionEnvio) {
+        alert(error.message)
+        return
+      }
+      // Un fallo de red puede ocurrir despu?s de que el servidor haya enviado partidas.
+      setEnvioIncierto(true)
+      alert(`${error instanceof Error ? error.message : 'No fue posible confirmar el env?o'}. Consulta los pedidos antes de volver a enviar.`)
     } finally {
       setEnviandoPedido(false)
     }
@@ -875,11 +889,27 @@ function App() {
                 customer={completedCustomer}
                 consignee={selectedConsignee}
               />
+              <label htmlFor="moneda-ws">Moneda para el webservice</label>{' '}
+              <select id="moneda-ws" value={moneda} disabled={enviandoPedido || pedidoEnviado || envioIncierto} onChange={(event) => setMoneda(event.target.value as 'MXN' | 'USD')}>
+                <option value="MXN">MXN</option>
+                <option value="USD">USD</option>
+              </select>
+              {resultadoEnvio && (
+                <div role="status">
+                  <p>{resultadoEnvio.message}</p>
+                  {resultadoEnvio.registradas.map((partida) => (
+                    <p key={partida.index}>Producto {partida.index + 1} ({partida.codigo}): registrado con ID {partida.idPedido}</p>
+                  ))}
+                  {resultadoEnvio.partidaIncierta && <p>Producto {resultadoEnvio.partidaIncierta.index + 1} ({resultadoEnvio.partidaIncierta.codigo}): resultado sin confirmar.</p>}
+                  {resultadoEnvio.pendientes?.map((partida) => <p key={partida.index}>Producto {partida.index + 1} ({partida.codigo}): no enviado.</p>)}
+                </div>
+              )}
+              {envioIncierto && !resultadoEnvio && <p role="alert">No se pudo confirmar el resultado. Consulta el webservice antes de volver a enviar.</p>}
               <button
                 type="button"
                 className="primary-button"
                 onClick={handleEnviarPedido}
-                disabled={enviandoPedido || pedidoEnviado}
+                disabled={enviandoPedido || pedidoEnviado || envioIncierto}
               >
                 {enviandoPedido
                   ? 'Enviando...'
